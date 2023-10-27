@@ -1,0 +1,15 @@
+{
+  "name": "google-export",
+  "scripts": {
+    "postinstall": "tsc",
+    "start": "node dist/main.js",
+    "watch": "tsc --watch",
+    "format": "prettier . --write"
+  },
+  "dependencies": {
+    "@types/node": "^20.8.9",
+    "googleapis": "^128.0.0",
+    "prettier": "^3.0.3",
+    "typescript": "^5.2.2"
+  }
+}

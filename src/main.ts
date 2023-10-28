@@ -5,11 +5,13 @@ import GoogleAuthProvider from "./google/google-auth-provider";
 import GoogleContactsExport from "./google/google-contacts-export";
 import GoogleContactsProvider from "./google/google-contacts-provider";
 
-const GOOGLE_CREDENTIALS_PATH = __dirname + "/../local/google-credentials.json";
-const CLOUDFLARE_CREDENTIALS_PATH = __dirname + "/../local/cloudflare-credentials.json";
-const CONTACTS_OUTPUT_PATH = __dirname + "/../local/output/contacts.json";
-const CONTACTS_CSV_OUTPUT_PATH = __dirname + "/../local/output/contacts.csv";
-const ZONES_OUTPUT_PATH = __dirname + "/../local/output/zones.json";
+const CREDENTIALS_FOLDER = __dirname + "/../private";
+const OUTPUT_FOLDER = __dirname + "/../private/output";
+const GOOGLE_CREDENTIALS_PATH = CREDENTIALS_FOLDER + "/google-credentials.json";
+const CLOUDFLARE_CREDENTIALS_PATH = CREDENTIALS_FOLDER + "/cloudflare-credentials.json";
+const CONTACTS_OUTPUT_PATH = OUTPUT_FOLDER + "/contacts.json";
+const CONTACTS_CSV_OUTPUT_PATH = OUTPUT_FOLDER + "/contacts.csv";
+const ZONES_OUTPUT_PATH = OUTPUT_FOLDER + "/zones.json";
 
 async function main() {
   const cloudflareCredentials = await readFile(CLOUDFLARE_CREDENTIALS_PATH, "utf-8");
@@ -22,7 +24,7 @@ async function main() {
   console.log(`Written ${ZONES_OUTPUT_PATH}`);
 
   for (const zone of zones as any[]) {
-    const outputPath = `${__dirname}/../local/${zone.zone.name}.txt`;
+    const outputPath = `${OUTPUT_FOLDER}/${zone.zone.name}.txt`;
     await writeFile(outputPath, zone.dnsRecords.export);
     console.log(`Written ${outputPath}`);
   }

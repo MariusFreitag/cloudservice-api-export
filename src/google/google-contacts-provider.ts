@@ -1,4 +1,6 @@
 import { Auth, google, people_v1 } from "googleapis";
+import { createObjectCsvStringifier } from "csv-writer";
+import { EOL } from "os";
 
 export default class PeopleProvider {
   private peopleClient?: people_v1.People;
@@ -41,5 +43,21 @@ export default class PeopleProvider {
     }
 
     return contacts;
+  }
+
+  public async generateContactsCsv(contacts: people_v1.Schema$Person[]): Promise<string> {
+    const csvWriter = createObjectCsvStringifier({
+      header: [
+        { id: "name", title: "NAME" },
+        { id: "phone", title: "PHONE" },
+      ],
+    });
+
+    const records = contacts.map((contact) => ({
+      name: contact.names?.[0]?.displayName,
+      phone: contact.phoneNumbers?.[0]?.value,
+    }));
+
+    return csvWriter.getHeaderString() + csvWriter.stringifyRecords(records);
   }
 }

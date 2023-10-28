@@ -10,6 +10,7 @@
     "@types/cloudflare": "^2.7.12",
     "@types/node": "^20.8.9",
     "cloudflare": "^2.9.1",
+    "csv-writer": "^1.6.0",
     "googleapis": "^128.0.0",
     "prettier": "^3.0.3",
     "typescript": "^5.2.2"

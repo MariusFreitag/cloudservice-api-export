@@ -7,6 +7,7 @@ import CloudflareZoneProvider from "./cloudflare/cloudflare-zones-provider";
 const GOOGLE_CREDENTIALS_PATH = __dirname + "/../local/google-credentials.json";
 const CLOUDFLARE_CREDENTIALS_PATH = __dirname + "/../local/cloudflare-credentials.json";
 const CONTACTS_OUTPUT_PATH = __dirname + "/../local/contacts.json";
+const CONTACTS_CSV_OUTPUT_PATH = __dirname + "/../local/contacts.csv";
 const ZONES_OUTPUT_PATH = __dirname + "/../local/zones.json";
 
 async function main() {
@@ -36,5 +37,9 @@ async function main() {
   console.log(contacts.length);
   await writeFile(CONTACTS_OUTPUT_PATH, JSON.stringify(contacts, null, 2));
   console.log(`Written ${CONTACTS_OUTPUT_PATH}`);
+
+  const contactsCsv = await peopleProvider.generateContactsCsv(contacts);
+  await writeFile(CONTACTS_CSV_OUTPUT_PATH, contactsCsv);
+  console.log(`Written ${CONTACTS_CSV_OUTPUT_PATH}`);
 }
 main();

@@ -1,7 +1,7 @@
 import { createObjectCsvStringifier } from "csv-writer";
 import { people_v1 } from "googleapis";
 
-export default class GoogleContactsExport {
+export default class GoogleContactsTransformer {
   private sortContacts(contacts: people_v1.Schema$Person[]) {
     const clonedContacts = JSON.parse(JSON.stringify(contacts)) as people_v1.Schema$Person[];
     clonedContacts.sort((a, b) => {

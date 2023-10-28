@@ -3,7 +3,7 @@ import CloudflareAuthProvider from "./cloudflare/cloudflare-auth-provider";
 import CloudflareZoneProvider from "./cloudflare/cloudflare-zones-provider";
 import GoogleAuthProvider from "./google/google-auth-provider";
 import GoogleCalendarProvider from "./google/google-calendar-provider";
-import GoogleContactsExport from "./google/google-contacts-export";
+import GoogleContactsTransformer from "./google/google-contacts-transformer";
 import GoogleContactsProvider from "./google/google-contacts-provider";
 
 const CREDENTIALS_FOLDER = __dirname + "/../private";
@@ -36,6 +36,7 @@ async function main() {
     JSON.parse(googleCredentials),
     GoogleContactsProvider.scopes,
   ).getClient();
+  
   const peopleProvider = new GoogleContactsProvider(googleAuth);
   const contactGroups = await peopleProvider.getContactGroups();
   const contacts = await peopleProvider.getContacts();
@@ -44,7 +45,8 @@ async function main() {
   await writeFile(CONTACTS_OUTPUT_PATH, JSON.stringify({ contactGroups, contacts }, null, 2));
   console.log(`Written ${CONTACTS_OUTPUT_PATH}`);
 
-  const contactsCsv = await new GoogleContactsExport().generateContactsCsv(contactGroups, contacts);
+  const calendarTransformer = new GoogleContactsTransformer();
+  const contactsCsv = await calendarTransformer.generateContactsCsv(contactGroups, contacts);
   await writeFile(CONTACTS_CSV_OUTPUT_PATH, contactsCsv);
   console.log(`Written ${CONTACTS_CSV_OUTPUT_PATH}`);
 

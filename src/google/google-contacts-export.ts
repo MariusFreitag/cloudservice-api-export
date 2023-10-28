@@ -172,14 +172,14 @@ export default class GoogleContactsExport {
 
     const records = contacts.map((contact) => {
       if (
-        contact.names?.length !== 1 ||
-        contact.birthdays?.length !== 1 ||
-        contact.genders?.length !== 1 ||
-        contact.biographies?.length !== 1 ||
-        contact.photos?.length !== 1
+        (contact.names?.length ?? 0) > 1 ||
+        (contact.birthdays?.length ?? 0) > 1 ||
+        (contact.genders?.length ?? 0) > 1 ||
+        (contact.biographies?.length ?? 0) > 1
+        // I'm ignoring multiple photos
       ) {
         throw new Error(
-          `The contact ${contact.names?.[0].displayName} has more than one name, birthday, gender, biography, or photo!`,
+          `The contact '${contact.names?.[0].displayName}' has more than one name, birthday, gender, or biography!`,
         );
       }
 

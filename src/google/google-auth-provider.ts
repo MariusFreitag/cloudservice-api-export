@@ -24,7 +24,7 @@ export default class GoogleAuthProvider {
     return new Promise((resolve, reject) => {
       const authUrl = this.authClient!.generateAuthUrl({
         access_type: "offline",
-        scope: this.scopes,
+        scope: this.scopes.join(" "),
       });
 
       const server = http.createServer((req, res) => {

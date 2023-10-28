@@ -32,11 +32,11 @@ async function main() {
   }
 
   const googleCredentials = await readFile(GOOGLE_CREDENTIALS_PATH, "utf-8");
-  const googleAuth = await new GoogleAuthProvider(
-    JSON.parse(googleCredentials),
-    GoogleContactsProvider.scopes,
-  ).getClient();
-  
+  const googleAuth = await new GoogleAuthProvider(JSON.parse(googleCredentials), [
+    ...GoogleContactsProvider.scopes,
+    ...GoogleCalendarProvider.scopes,
+  ]).getClient();
+
   const peopleProvider = new GoogleContactsProvider(googleAuth);
   const contactGroups = await peopleProvider.getContactGroups();
   const contacts = await peopleProvider.getContacts();

@@ -2,7 +2,10 @@ import { Auth, calendar_v3, google } from "googleapis";
 
 export default class GoogleCalendarProvider {
   private calendarClient?: calendar_v3.Calendar;
-  public static readonly scopes = ["https://www.googleapis.com/auth/calendar.readonly"];
+  public static readonly scopes = [
+    "https://www.googleapis.com/auth/calendar.readonly",
+    "https://www.googleapis.com/auth/calendar.events.readonly",
+  ];
 
   constructor(private readonly authClient: Auth.OAuth2Client) {}
 

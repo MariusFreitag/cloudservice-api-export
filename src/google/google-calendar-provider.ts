@@ -27,13 +27,13 @@ export default class GoogleCalendarProvider {
     nextPageToken?: string,
   ): Promise<calendar_v3.Schema$CalendarListEntry[]> {
     const service = await this.getClient();
-    const res = await service.calendarList.list({ pageToken: nextPageToken });
+    const response = await service.calendarList.list({ pageToken: nextPageToken });
 
-    calendarListEntries.push(...(res.data.items ?? []));
+    calendarListEntries.push(...(response.data.items ?? []));
 
-    if (res.data.nextPageToken != undefined) {
-      console.log(`Fetching next page (${res.data.nextPageToken})`);
-      return this.getCalendarListEntries(calendarListEntries, res.data.nextPageToken);
+    if (response.data.nextPageToken != undefined) {
+      console.log(`Fetching next page (${response.data.nextPageToken})`);
+      return this.getCalendarListEntries(calendarListEntries, response.data.nextPageToken);
     }
 
     return calendarListEntries;
@@ -45,13 +45,13 @@ export default class GoogleCalendarProvider {
     nextPageToken?: string,
   ): Promise<calendar_v3.Schema$Event[]> {
     const service = await this.getClient();
-    const res = await service.events.list({ calendarId: calendarId, pageToken: nextPageToken });
+    const response = await service.events.list({ calendarId: calendarId, pageToken: nextPageToken });
 
-    events.push(...(res.data.items ?? []));
+    events.push(...(response.data.items ?? []));
 
-    if (res.data.nextPageToken != undefined) {
-      console.log(`Fetching next page (${res.data.nextPageToken})`);
-      return this.getEvents(calendarId, events, res.data.nextPageToken);
+    if (response.data.nextPageToken != undefined) {
+      console.log(`Fetching next page (${response.data.nextPageToken})`);
+      return this.getEvents(calendarId, events, response.data.nextPageToken);
     }
 
     return events;

@@ -1,15 +1,20 @@
 import { readFile, writeFile } from "fs/promises";
 import CloudflareAuthProvider from "./cloudflare/cloudflare-auth-provider";
 import CloudflareZoneProvider from "./cloudflare/cloudflare-zones-provider";
+import GitHubIssueProvider from "./github/github-issues-provider";
 import GoogleAuthProvider from "./google/google-auth-provider";
 import GoogleCalendarProvider from "./google/google-calendar-provider";
-import GoogleContactsTransformer from "./google/google-contacts-transformer";
 import GoogleContactsProvider from "./google/google-contacts-provider";
+import GoogleContactsTransformer from "./google/google-contacts-transformer";
 
-const CREDENTIALS_FOLDER = __dirname + "/../private";
+const AUTH_CALLBACK_PORT = "3124";
+
+const CREDENTIALS_FOLDER = __dirname + "/../private/credentials";
 const OUTPUT_FOLDER = __dirname + "/../private/output";
 const GOOGLE_CREDENTIALS_PATH = CREDENTIALS_FOLDER + "/google-credentials.json";
+const GOOGLE_TOKEN_CACHE_PATH = CREDENTIALS_FOLDER + "/cached-google-token.json";
 const CLOUDFLARE_CREDENTIALS_PATH = CREDENTIALS_FOLDER + "/cloudflare-credentials.json";
+const GITHUB_CREDENTIALS_PATH = CREDENTIALS_FOLDER + "/github-credentials.json";
 const CONTACTS_OUTPUT_PATH = OUTPUT_FOLDER + "/contacts.json";
 const CONTACTS_CSV_OUTPUT_PATH = OUTPUT_FOLDER + "/contacts.csv";
 const CONTACTS_JSON_OUTPUT_PATH = OUTPUT_FOLDER + "/calendars.json";
@@ -32,10 +37,12 @@ async function main() {
   }
 
   const googleCredentials = await readFile(GOOGLE_CREDENTIALS_PATH, "utf-8");
-  const googleAuth = await new GoogleAuthProvider(JSON.parse(googleCredentials), [
-    ...GoogleContactsProvider.scopes,
-    ...GoogleCalendarProvider.scopes,
-  ]).getClient();
+  const googleAuth = await new GoogleAuthProvider(
+    JSON.parse(googleCredentials),
+    GOOGLE_TOKEN_CACHE_PATH,
+    AUTH_CALLBACK_PORT,
+    [...GoogleContactsProvider.scopes, ...GoogleCalendarProvider.scopes],
+  ).getClient();
 
   const peopleProvider = new GoogleContactsProvider(googleAuth);
   const contactGroups = await peopleProvider.getContactGroups();
@@ -59,6 +66,15 @@ async function main() {
   for (const calendar of calendars) {
     const outputPath = `${OUTPUT_FOLDER}/${calendar.calendar.id}.ics`;
     await writeFile(outputPath, calendar.events.export);
+    console.log(`Written ${outputPath}`);
+  }
+
+  const gitHubCredentials = JSON.parse(await readFile(GITHUB_CREDENTIALS_PATH, "utf-8"));
+  const issuesProvider = new GitHubIssueProvider(gitHubCredentials);
+  for (const repository of gitHubCredentials.repositories) {
+    const issues = await issuesProvider.getIssues(repository);
+    const outputPath = `${OUTPUT_FOLDER}/${repository.replace("/", "-")}.ghissues.json`;
+    await writeFile(outputPath, JSON.stringify(issues, null, 2));
     console.log(`Written ${outputPath}`);
   }
 }

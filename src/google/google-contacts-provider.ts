@@ -24,15 +24,15 @@ export default class GoogleContactsProvider {
     nextPageToken?: string,
   ): Promise<people_v1.Schema$ContactGroup[]> {
     const service = await this.getClient();
-    const res = await service.contactGroups.list({
+    const response = await service.contactGroups.list({
       pageToken: nextPageToken,
     });
 
-    contactGroups.push(...(res.data.contactGroups ?? []));
+    contactGroups.push(...(response.data.contactGroups ?? []));
 
-    if (res.data.nextPageToken != undefined) {
-      console.log(`Fetching next page (${res.data.nextPageToken})`);
-      return this.getContactGroups(contactGroups, res.data.nextPageToken);
+    if (response.data.nextPageToken != undefined) {
+      console.log(`Fetching next page (${response.data.nextPageToken})`);
+      return this.getContactGroups(contactGroups, response.data.nextPageToken);
     }
 
     return contactGroups;
@@ -43,18 +43,18 @@ export default class GoogleContactsProvider {
     nextPageToken?: string,
   ): Promise<people_v1.Schema$Person[]> {
     const service = await this.getClient();
-    const res = await service.people.connections.list({
+    const response = await service.people.connections.list({
       resourceName: "people/me",
       pageToken: nextPageToken,
       personFields:
         "addresses,ageRanges,biographies,birthdays,calendarUrls,clientData,coverPhotos,emailAddresses,events,externalIds,genders,imClients,interests,locales,locations,memberships,metadata,miscKeywords,names,nicknames,occupations,organizations,phoneNumbers,photos,relations,sipAddresses,skills,urls,userDefined",
     });
 
-    contacts.push(...(res.data.connections ?? []));
+    contacts.push(...(response.data.connections ?? []));
 
-    if (res.data.nextPageToken != undefined) {
-      console.log(`Fetching next page (${res.data.nextPageToken})`);
-      return this.getContacts(contacts, res.data.nextPageToken);
+    if (response.data.nextPageToken != undefined) {
+      console.log(`Fetching next page (${response.data.nextPageToken})`);
+      return this.getContacts(contacts, response.data.nextPageToken);
     }
 
     return contacts;

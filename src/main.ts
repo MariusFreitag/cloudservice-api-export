@@ -1,14 +1,15 @@
 import { readFile, writeFile } from "fs/promises";
-import GoogleAuthProvider from "./google/google-auth-provider";
 import CloudflareAuthProvider from "./cloudflare/cloudflare-auth-provider";
-import PeopleProvider from "./google/google-contacts-provider";
 import CloudflareZoneProvider from "./cloudflare/cloudflare-zones-provider";
+import GoogleAuthProvider from "./google/google-auth-provider";
+import GoogleContactsExport from "./google/google-contacts-export";
+import GoogleContactsProvider from "./google/google-contacts-provider";
 
 const GOOGLE_CREDENTIALS_PATH = __dirname + "/../local/google-credentials.json";
 const CLOUDFLARE_CREDENTIALS_PATH = __dirname + "/../local/cloudflare-credentials.json";
-const CONTACTS_OUTPUT_PATH = __dirname + "/../local/contacts.json";
-const CONTACTS_CSV_OUTPUT_PATH = __dirname + "/../local/contacts.csv";
-const ZONES_OUTPUT_PATH = __dirname + "/../local/zones.json";
+const CONTACTS_OUTPUT_PATH = __dirname + "/../local/output/contacts.json";
+const CONTACTS_CSV_OUTPUT_PATH = __dirname + "/../local/output/contacts.csv";
+const ZONES_OUTPUT_PATH = __dirname + "/../local/output/zones.json";
 
 async function main() {
   const cloudflareCredentials = await readFile(CLOUDFLARE_CREDENTIALS_PATH, "utf-8");
@@ -29,9 +30,9 @@ async function main() {
   const googleCredentials = await readFile(GOOGLE_CREDENTIALS_PATH, "utf-8");
   const googleAuth = await new GoogleAuthProvider(
     JSON.parse(googleCredentials),
-    PeopleProvider.scopes,
+    GoogleContactsProvider.scopes,
   ).getClient();
-  const peopleProvider = new PeopleProvider(googleAuth);
+  const peopleProvider = new GoogleContactsProvider(googleAuth);
   const contactGroups = await peopleProvider.getContactGroups();
   const contacts = await peopleProvider.getContacts();
 
@@ -39,7 +40,7 @@ async function main() {
   await writeFile(CONTACTS_OUTPUT_PATH, JSON.stringify({ contactGroups, contacts }, null, 2));
   console.log(`Written ${CONTACTS_OUTPUT_PATH}`);
 
-  const contactsCsv = await peopleProvider.generateContactsCsv(contactGroups, contacts);
+  const contactsCsv = await new GoogleContactsExport().generateContactsCsv(contactGroups, contacts);
   await writeFile(CONTACTS_CSV_OUTPUT_PATH, contactsCsv);
   console.log(`Written ${CONTACTS_CSV_OUTPUT_PATH}`);
 }

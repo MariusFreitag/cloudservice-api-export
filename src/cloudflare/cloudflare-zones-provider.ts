@@ -19,7 +19,14 @@ export default class CloudflareZoneProvider {
     return typeof completedResponse === "string" ? completedResponse : completedResponse.result;
   }
 
-  public async getZones(): Promise<object[]> {
+  public async getZones(): Promise<
+    {
+      zone: unknown;
+      dnsRecords: { data: unknown; export: string | undefined };
+      settings: unknown;
+      emails: { routing: unknown; rules: unknown };
+    }[]
+  > {
     const zones = (await this.getResult(this.authClient.zones.browse())) as { id: string }[];
 
     const result = [];
@@ -35,7 +42,7 @@ export default class CloudflareZoneProvider {
         zone,
         dnsRecords: {
           data: await this.getResult(dnsRecordsResponse),
-          export: await this.getResult(dnsRecordsExportResponse),
+          export: (await this.getResult(dnsRecordsExportResponse)) as string | undefined,
         },
         settings: await this.getResult(settingsResponse),
         emails: {

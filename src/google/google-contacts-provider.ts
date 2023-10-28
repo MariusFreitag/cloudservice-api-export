@@ -25,7 +25,6 @@ export default class GoogleContactsProvider {
   ): Promise<people_v1.Schema$ContactGroup[]> {
     const service = await this.getClient();
     const res = await service.contactGroups.list({
-      pageSize: 10,
       pageToken: nextPageToken,
     });
 
@@ -46,7 +45,6 @@ export default class GoogleContactsProvider {
     const service = await this.getClient();
     const res = await service.people.connections.list({
       resourceName: "people/me",
-      pageSize: 10,
       pageToken: nextPageToken,
       personFields:
         "addresses,ageRanges,biographies,birthdays,calendarUrls,clientData,coverPhotos,emailAddresses,events,externalIds,genders,imClients,interests,locales,locations,memberships,metadata,miscKeywords,names,nicknames,occupations,organizations,phoneNumbers,photos,relations,sipAddresses,skills,urls,userDefined",

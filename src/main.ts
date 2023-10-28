@@ -2,6 +2,7 @@ import { readFile, writeFile } from "fs/promises";
 import CloudflareAuthProvider from "./cloudflare/cloudflare-auth-provider";
 import CloudflareZoneProvider from "./cloudflare/cloudflare-zones-provider";
 import GoogleAuthProvider from "./google/google-auth-provider";
+import GoogleCalendarProvider from "./google/google-calendar-provider";
 import GoogleContactsExport from "./google/google-contacts-export";
 import GoogleContactsProvider from "./google/google-contacts-provider";
 
@@ -11,6 +12,7 @@ const GOOGLE_CREDENTIALS_PATH = CREDENTIALS_FOLDER + "/google-credentials.json";
 const CLOUDFLARE_CREDENTIALS_PATH = CREDENTIALS_FOLDER + "/cloudflare-credentials.json";
 const CONTACTS_OUTPUT_PATH = OUTPUT_FOLDER + "/contacts.json";
 const CONTACTS_CSV_OUTPUT_PATH = OUTPUT_FOLDER + "/contacts.csv";
+const CONTACTS_JSON_OUTPUT_PATH = OUTPUT_FOLDER + "/calendars.json";
 const ZONES_OUTPUT_PATH = OUTPUT_FOLDER + "/zones.json";
 
 async function main() {
@@ -45,5 +47,17 @@ async function main() {
   const contactsCsv = await new GoogleContactsExport().generateContactsCsv(contactGroups, contacts);
   await writeFile(CONTACTS_CSV_OUTPUT_PATH, contactsCsv);
   console.log(`Written ${CONTACTS_CSV_OUTPUT_PATH}`);
+
+  const calendarProvider = new GoogleCalendarProvider(googleAuth);
+  const calendars = await calendarProvider.getCalendars();
+
+  await writeFile(CONTACTS_JSON_OUTPUT_PATH, JSON.stringify(calendars, null, 2));
+  console.log(`Written ${CONTACTS_JSON_OUTPUT_PATH}`);
+
+  for (const calendar of calendars) {
+    const outputPath = `${OUTPUT_FOLDER}/${calendar.calendar.id}.ics`;
+    await writeFile(outputPath, calendar.events.export);
+    console.log(`Written ${outputPath}`);
+  }
 }
 main();

@@ -2,7 +2,7 @@ import { readFile, writeFile } from "fs/promises";
 import { Auth, google } from "googleapis";
 import * as http from "http";
 
-const TOKEN_CACHE_PATH = __dirname + "/../../local/cached-google-token.json";
+const TOKEN_CACHE_PATH = __dirname + "/../../private/cached-google-token.json";
 const AUTH_CALLBACK_PORT = "3124";
 
 export type GoogleAuthCredentials = {
@@ -45,6 +45,11 @@ export default class GoogleAuthProvider {
     });
   }
 
+  public async getAccessToken(): Promise<string | undefined | null> {
+    const client = await this.getClient();
+    return (await client.getAccessToken())?.token;
+  }
+
   public async getClient(): Promise<Auth.OAuth2Client> {
     if (this.authClient) {
       return this.authClient;
@@ -59,7 +64,7 @@ export default class GoogleAuthProvider {
 
     const cachedToken = await readFile(TOKEN_CACHE_PATH, "utf-8").catch(() => null);
     if (cachedToken) {
-      this.authClient.setCredentials(JSON.parse(cachedToken) as Auth.Credentials);
+      this.authClient.setCredentials(JSON.parse(cachedToken));
     } else {
       const code = await this.fetchAuthCode();
       const tokenResponse = await this.authClient.getToken(code);

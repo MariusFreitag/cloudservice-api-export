@@ -1,12 +1,31 @@
 import { readFile, writeFile } from "fs/promises";
 import GoogleAuthProvider from "./google/google-auth-provider";
+import CloudflareAuthProvider from "./cloudflare/cloudflare-auth-provider";
 import PeopleProvider from "./google/google-contacts-provider";
+import CloudflareZoneProvider from "./cloudflare/cloudflare-zones-provider";
 
-const CREDENTIALS_PATH = __dirname + "/../local/credentials.json";
+const GOOGLE_CREDENTIALS_PATH = __dirname + "/../local/google-credentials.json";
+const CLOUDFLARE_CREDENTIALS_PATH = __dirname + "/../local/cloudflare-credentials.json";
 const CONTACTS_OUTPUT_PATH = __dirname + "/../local/contacts.json";
+const ZONES_OUTPUT_PATH = __dirname + "/../local/zones.json";
 
 async function main() {
-  const googleCredentials = await readFile(CREDENTIALS_PATH, "utf-8");
+  const cloudflareCredentials = await readFile(CLOUDFLARE_CREDENTIALS_PATH, "utf-8");
+  const cloudflareAuth = await new CloudflareAuthProvider(JSON.parse(cloudflareCredentials)).getClient();
+  const zoneProvider = new CloudflareZoneProvider(cloudflareAuth);
+  const zones = await zoneProvider.getZones();
+
+  console.log(zones.length);
+  await writeFile(ZONES_OUTPUT_PATH, JSON.stringify(zones, null, 2));
+  console.log(`Written ${ZONES_OUTPUT_PATH}`);
+
+  for (const zone of zones as any[]) {
+    const outputPath = `${__dirname}/../local/${zone.zone.name}.txt`;
+    await writeFile(outputPath, zone.dnsRecords.export);
+    console.log(`Written ${outputPath}`);
+  }
+
+  const googleCredentials = await readFile(GOOGLE_CREDENTIALS_PATH, "utf-8");
   const googleAuth = await new GoogleAuthProvider(
     JSON.parse(googleCredentials),
     PeopleProvider.scopes,
@@ -16,6 +35,6 @@ async function main() {
 
   console.log(contacts.length);
   await writeFile(CONTACTS_OUTPUT_PATH, JSON.stringify(contacts, null, 2));
-  console.log(`Data stored to ${CONTACTS_OUTPUT_PATH}`);
+  console.log(`Written ${CONTACTS_OUTPUT_PATH}`);
 }
 main();

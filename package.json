@@ -1,5 +1,5 @@
 {
-  "name": "google-export",
+  "name": "cloudservice-api-export",
   "scripts": {
     "postinstall": "tsc",
     "start": "node dist/main.js",

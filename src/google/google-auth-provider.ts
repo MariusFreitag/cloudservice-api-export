@@ -2,7 +2,7 @@ import { readFile, writeFile } from "fs/promises";
 import { Auth, google } from "googleapis";
 import * as http from "http";
 
-const TOKEN_CACHE_PATH = __dirname + "/../local/cached-google-token.json";
+const TOKEN_CACHE_PATH = __dirname + "/../../local/cached-google-token.json";
 const AUTH_CALLBACK_PORT = "3124";
 
 export type GoogleAuthCredentials = {
@@ -12,7 +12,7 @@ export type GoogleAuthCredentials = {
   };
 };
 
-export default class AuthProvider {
+export default class GoogleAuthProvider {
   private authClient?: Auth.OAuth2Client;
 
   constructor(
@@ -29,11 +29,7 @@ export default class AuthProvider {
 
       const server = http.createServer((req, res) => {
         const token = /\?code=(.*)&scope=/.exec(req.url ?? "")?.[1];
-        res.end(
-          token
-            ? "Success. You can now close this tab."
-            : "Failure. Try again.",
-        );
+        res.end(token ? "Success. You can now close this tab." : "Failure. Try again.");
         server.close();
 
         if (token) {
@@ -61,13 +57,9 @@ export default class AuthProvider {
       `http://localhost:${AUTH_CALLBACK_PORT}`,
     );
 
-    const cachedToken = await readFile(TOKEN_CACHE_PATH, "utf-8").catch(
-      () => null,
-    );
+    const cachedToken = await readFile(TOKEN_CACHE_PATH, "utf-8").catch(() => null);
     if (cachedToken) {
-      this.authClient.setCredentials(
-        JSON.parse(cachedToken) as Auth.Credentials,
-      );
+      this.authClient.setCredentials(JSON.parse(cachedToken) as Auth.Credentials);
     } else {
       const code = await this.fetchAuthCode();
       const tokenResponse = await this.authClient.getToken(code);

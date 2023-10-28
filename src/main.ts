@@ -32,13 +32,14 @@ async function main() {
     PeopleProvider.scopes,
   ).getClient();
   const peopleProvider = new PeopleProvider(googleAuth);
+  const contactGroups = await peopleProvider.getContactGroups();
   const contacts = await peopleProvider.getContacts();
 
   console.log(contacts.length);
-  await writeFile(CONTACTS_OUTPUT_PATH, JSON.stringify(contacts, null, 2));
+  await writeFile(CONTACTS_OUTPUT_PATH, JSON.stringify({ contactGroups, contacts }, null, 2));
   console.log(`Written ${CONTACTS_OUTPUT_PATH}`);
 
-  const contactsCsv = await peopleProvider.generateContactsCsv(contacts);
+  const contactsCsv = await peopleProvider.generateContactsCsv(contactGroups, contacts);
   await writeFile(CONTACTS_CSV_OUTPUT_PATH, contactsCsv);
   console.log(`Written ${CONTACTS_CSV_OUTPUT_PATH}`);
 }

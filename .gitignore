@@ -1,5 +1,3 @@
 node_modules
 dist
-private/credentials/*
-private/output/*
-!/**/.gitkeep
+private

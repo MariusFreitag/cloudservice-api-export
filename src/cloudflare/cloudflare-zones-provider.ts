@@ -30,18 +30,22 @@ export default class CloudflareZoneProvider {
     return typeof completedResponse === "string" ? completedResponse : completedResponse.result;
   }
 
-  public async getZones(): Promise<
+  public async getZones(fetchDetails: boolean): Promise<
     {
       zone: { name: string } & unknown;
-      dnsRecords: { data: unknown; export: string | undefined };
-      settings: unknown;
-      emails: { routing: unknown; rules: unknown };
+      dnsRecords?: { data: unknown; export: string | undefined };
+      settings?: unknown;
+      emails?: { routing: unknown; rules: unknown };
     }[]
   > {
     const zones = (await this.getResult(this.authClient.zones.browse())) as { id: string; name: string }[];
     this.log.info("Fetched all zones");
 
     const result = [];
+
+    if (!fetchDetails) {
+      return zones.map((zone) => ({ zone }));
+    }
 
     for (const zone of zones ?? []) {
       const dnsRecordsResponse = this.authClient.dnsRecords.browse(zone.id);

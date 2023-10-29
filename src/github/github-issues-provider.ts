@@ -1,6 +1,6 @@
 import { Logger } from "../logger";
 
-type GitHubCredentials = {
+export type GitHubCredentials = {
   apiUrl: string;
   username: string;
   accessToken: string;
@@ -23,7 +23,7 @@ export default class GitHubIssuesProvider {
     return (await response.json()) as unknown[];
   }
 
-  public async getIssues(repository: string): Promise<unknown> {
+  public async getIssues(repository: string, fetchIssueComments: boolean): Promise<unknown> {
     const issues = [];
 
     // Fetch issues themselves
@@ -42,13 +42,15 @@ export default class GitHubIssuesProvider {
       }
     }
 
-    // Fetch comments of issues
-    for (const issue of issues) {
-      if (issue.comments > 0) {
-        const response = await this.request(issue.comments_url, false);
-        issue.comments_data = response;
-      } else {
-        issue.comments_data = [];
+    if (fetchIssueComments) {
+      // Fetch comments of issues
+      for (const issue of issues) {
+        if (issue.comments > 0) {
+          const response = await this.request(issue.comments_url, false);
+          issue.comments_data = response;
+        } else {
+          issue.comments_data = [];
+        }
       }
     }
 

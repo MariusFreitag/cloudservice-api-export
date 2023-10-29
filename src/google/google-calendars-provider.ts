@@ -2,7 +2,7 @@ import { GaxiosResponse } from "gaxios";
 import { Auth, calendar_v3, google } from "googleapis";
 import { Logger } from "../logger";
 
-export default class GoogleCalendarProvider {
+export default class GoogleCalendarsProvider {
   private calendarClient?: calendar_v3.Calendar;
   public static readonly scopes = [
     "https://www.googleapis.com/auth/calendar.readonly",

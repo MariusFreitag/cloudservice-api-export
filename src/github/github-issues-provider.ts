@@ -28,7 +28,9 @@ export default class GitHubIssuesProvider {
 
     // Fetch issues themselves
     for (let page = 1; ; page++) {
-      const response = (await this.request(`/repos/${repository}/issues?page=${page}`)) as ({
+      const response = (await this.request(
+        `/repos/${repository}/issues?state=all&per_page=100&page=${page}`,
+      )) as ({
         comments: number;
         comments_url: string;
         comments_data: unknown[];
@@ -46,7 +48,7 @@ export default class GitHubIssuesProvider {
       // Fetch comments of issues
       for (const issue of issues) {
         if (issue.comments > 0) {
-          const response = await this.request(issue.comments_url, false);
+          const response = await this.request(`${issue.comments_url}?per_page=100`, false);
           issue.comments_data = response;
         } else {
           issue.comments_data = [];

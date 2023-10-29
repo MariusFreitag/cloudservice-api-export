@@ -36,6 +36,7 @@ export default class GoogleCalendarsProvider {
     do {
       const response = (await service.calendarList.list({
         pageToken: nextPageToken,
+        maxResults: 250,
       })) as GaxiosResponse<calendar_v3.Schema$CalendarList>;
 
       calendarListEntries.push(...(response.data.items ?? []));
@@ -56,6 +57,7 @@ export default class GoogleCalendarsProvider {
       const response = (await service.events.list({
         calendarId: calendarId,
         pageToken: nextPageToken,
+        maxResults: 2500,
       })) as GaxiosResponse<calendar_v3.Schema$Events>;
 
       events.push(...(response.data.items ?? []));

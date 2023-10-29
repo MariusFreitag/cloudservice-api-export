@@ -33,6 +33,7 @@ export default class GoogleContactsProvider {
     do {
       const response = (await service.contactGroups.list({
         pageToken: nextPageToken,
+        pageSize: 1000,
       })) as GaxiosResponse<people_v1.Schema$ListContactGroupsResponse>;
 
       contactGroups.push(...(response.data.contactGroups ?? []));
@@ -53,6 +54,7 @@ export default class GoogleContactsProvider {
       const response = (await service.people.connections.list({
         resourceName: "people/me",
         pageToken: nextPageToken,
+        pageSize: 1000,
         personFields:
           "addresses,ageRanges,biographies,birthdays,calendarUrls,clientData,coverPhotos,emailAddresses,events,externalIds,genders,imClients,interests,locales,locations,memberships,metadata,miscKeywords,names,nicknames,occupations,organizations,phoneNumbers,photos,relations,sipAddresses,skills,urls,userDefined",
       })) as GaxiosResponse<people_v1.Schema$ListConnectionsResponse>;

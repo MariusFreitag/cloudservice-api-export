@@ -30,7 +30,7 @@ async function main() {
   await writeFile(ZONES_OUTPUT_PATH, JSON.stringify(zones, null, 2));
   console.log(`Written ${ZONES_OUTPUT_PATH}`);
 
-  for (const zone of zones as any[]) {
+  for (const zone of zones as { zone: { name: string }; dnsRecords: { export: string } }[]) {
     const outputPath = `${OUTPUT_FOLDER}/${zone.zone.name}.txt`;
     await writeFile(outputPath, zone.dnsRecords.export);
     console.log(`Written ${outputPath}`);

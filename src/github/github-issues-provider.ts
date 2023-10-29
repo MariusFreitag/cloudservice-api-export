@@ -18,7 +18,7 @@ export default class GitHubIssueProvider {
     return (await response.json()) as unknown[];
   }
 
-  public async getIssues(repository: string): Promise<any> {
+  public async getIssues(repository: string): Promise<unknown> {
     const issues = [];
 
     // Fetch issues themselves

@@ -7,7 +7,14 @@ export default class CloudflareZoneProvider {
 
   private request(path: string) {
     const extendedClient = this.authClient as unknown as {
-      _client: { request(method: string, path: string, query: string, options: { auth: {} }): ApiResponse };
+      _client: {
+        request(
+          method: string,
+          path: string,
+          query: string,
+          options: { auth: Record<string, never> },
+        ): ApiResponse;
+      };
     };
     return extendedClient._client.request("GET", path, "", { auth: {} });
   }

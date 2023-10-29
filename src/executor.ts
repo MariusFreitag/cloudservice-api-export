@@ -9,12 +9,12 @@ import GoogleContactsProvider from "./google/google-contacts-provider";
 import GoogleContactsTransformer from "./google/google-contacts-transformer";
 import { Logger } from "./logger";
 
-type ExecutionConfig = {
+export type ExecutionConfig = {
   rootFolder?: string;
   steps: ExecutionStep[];
 };
 
-type ExecutionStep =
+export type ExecutionStep =
   | {
       type: "Cloudflare";
       id: string;

@@ -6,7 +6,7 @@
     "name": "Marius Freitag"
   },
   "scripts": {
-    "build": "tsc .",
+    "build": "tsc",
     "format": "prettier . --write",
     "postinstall": "npm run build",
     "lint": "eslint .",

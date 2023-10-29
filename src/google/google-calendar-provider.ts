@@ -1,3 +1,4 @@
+import { GaxiosResponse } from "gaxios";
 import { Auth, calendar_v3, google } from "googleapis";
 
 export default class GoogleCalendarProvider {
@@ -22,37 +23,41 @@ export default class GoogleCalendarProvider {
     return this.calendarClient;
   }
 
-  public async getCalendarListEntries(
-    calendarListEntries: calendar_v3.Schema$CalendarListEntry[] = [],
-    nextPageToken?: string,
-  ): Promise<calendar_v3.Schema$CalendarListEntry[]> {
+  public async getCalendarListEntries(): Promise<calendar_v3.Schema$CalendarListEntry[]> {
     const service = await this.getClient();
-    const response = await service.calendarList.list({ pageToken: nextPageToken });
 
-    calendarListEntries.push(...(response.data.items ?? []));
+    const calendarListEntries = [];
 
-    if (response.data.nextPageToken != undefined) {
-      console.log(`Fetching next page (${response.data.nextPageToken})`);
-      return this.getCalendarListEntries(calendarListEntries, response.data.nextPageToken);
-    }
+    let nextPageToken = undefined;
+    do {
+      const response = (await service.calendarList.list({
+        pageToken: nextPageToken,
+      })) as GaxiosResponse<calendar_v3.Schema$CalendarList>;
+
+      calendarListEntries.push(...(response.data.items ?? []));
+      nextPageToken = response.data.nextPageToken;
+      console.log(`Fetched ${response.data.items?.length ?? 0} calendar list entries`);
+    } while (nextPageToken);
 
     return calendarListEntries;
   }
 
-  public async getEvents(
-    calendarId: string,
-    events: calendar_v3.Schema$Event[] = [],
-    nextPageToken?: string,
-  ): Promise<calendar_v3.Schema$Event[]> {
+  public async getEvents(calendarId: string): Promise<calendar_v3.Schema$Event[]> {
     const service = await this.getClient();
-    const response = await service.events.list({ calendarId: calendarId, pageToken: nextPageToken });
 
-    events.push(...(response.data.items ?? []));
+    const events = [];
 
-    if (response.data.nextPageToken != undefined) {
-      console.log(`Fetching next page (${response.data.nextPageToken})`);
-      return this.getEvents(calendarId, events, response.data.nextPageToken);
-    }
+    let nextPageToken = undefined;
+    do {
+      const response = (await service.events.list({
+        calendarId: calendarId,
+        pageToken: nextPageToken,
+      })) as GaxiosResponse<calendar_v3.Schema$Events>;
+
+      events.push(...(response.data.items ?? []));
+      nextPageToken = response.data.nextPageToken;
+      console.log(`Fetched ${response.data.items?.length ?? 0} events for calendar ${calendarId}`);
+    } while (nextPageToken);
 
     return events;
   }

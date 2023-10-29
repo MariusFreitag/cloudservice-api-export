@@ -1,3 +1,4 @@
+import { GaxiosResponse } from "gaxios";
 import { Auth, google, people_v1 } from "googleapis";
 
 export default class GoogleContactsProvider {
@@ -19,43 +20,43 @@ export default class GoogleContactsProvider {
     return this.peopleClient;
   }
 
-  public async getContactGroups(
-    contactGroups: people_v1.Schema$ContactGroup[] = [],
-    nextPageToken?: string,
-  ): Promise<people_v1.Schema$ContactGroup[]> {
+  public async getContactGroups(): Promise<people_v1.Schema$ContactGroup[]> {
     const service = await this.getClient();
-    const response = await service.contactGroups.list({
-      pageToken: nextPageToken,
-    });
 
-    contactGroups.push(...(response.data.contactGroups ?? []));
+    const contactGroups = [];
 
-    if (response.data.nextPageToken != undefined) {
-      console.log(`Fetching next page (${response.data.nextPageToken})`);
-      return this.getContactGroups(contactGroups, response.data.nextPageToken);
-    }
+    let nextPageToken = undefined;
+    do {
+      const response = (await service.contactGroups.list({
+        pageToken: nextPageToken,
+      })) as GaxiosResponse<people_v1.Schema$ListContactGroupsResponse>;
+
+      contactGroups.push(...(response.data.contactGroups ?? []));
+      nextPageToken = response.data.nextPageToken;
+      console.log(`Fetched ${response.data.contactGroups?.length ?? 0} contact groups`);
+    } while (nextPageToken);
 
     return contactGroups;
   }
 
-  public async getContacts(
-    contacts: people_v1.Schema$Person[] = [],
-    nextPageToken?: string,
-  ): Promise<people_v1.Schema$Person[]> {
+  public async getContacts(): Promise<people_v1.Schema$Person[]> {
     const service = await this.getClient();
-    const response = await service.people.connections.list({
-      resourceName: "people/me",
-      pageToken: nextPageToken,
-      personFields:
-        "addresses,ageRanges,biographies,birthdays,calendarUrls,clientData,coverPhotos,emailAddresses,events,externalIds,genders,imClients,interests,locales,locations,memberships,metadata,miscKeywords,names,nicknames,occupations,organizations,phoneNumbers,photos,relations,sipAddresses,skills,urls,userDefined",
-    });
 
-    contacts.push(...(response.data.connections ?? []));
+    const contacts = [];
 
-    if (response.data.nextPageToken != undefined) {
-      console.log(`Fetching next page (${response.data.nextPageToken})`);
-      return this.getContacts(contacts, response.data.nextPageToken);
-    }
+    let nextPageToken = undefined;
+    do {
+      const response = (await service.people.connections.list({
+        resourceName: "people/me",
+        pageToken: nextPageToken,
+        personFields:
+          "addresses,ageRanges,biographies,birthdays,calendarUrls,clientData,coverPhotos,emailAddresses,events,externalIds,genders,imClients,interests,locales,locations,memberships,metadata,miscKeywords,names,nicknames,occupations,organizations,phoneNumbers,photos,relations,sipAddresses,skills,urls,userDefined",
+      })) as GaxiosResponse<people_v1.Schema$ListConnectionsResponse>;
+
+      contacts.push(...(response.data.connections ?? []));
+      nextPageToken = response.data.nextPageToken;
+      console.log(`Fetched ${response.data.connections?.length ?? 0} contacts`);
+    } while (nextPageToken);
 
     return contacts;
   }

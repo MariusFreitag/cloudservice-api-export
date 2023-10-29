@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "fs/promises";
 import { Auth, google } from "googleapis";
 import * as http from "http";
+import { Logger } from "../logger";
 
 export type GoogleAuthCredentials = {
   installed: {
@@ -13,6 +14,7 @@ export default class GoogleAuthProvider {
   private authClient?: Auth.OAuth2Client;
 
   constructor(
+    private readonly log: Logger,
     private readonly credentials: GoogleAuthCredentials,
     private readonly tokenCachePath: string,
     private readonly authCallbackPort: string,
@@ -23,7 +25,7 @@ export default class GoogleAuthProvider {
     return new Promise((resolve, reject) => {
       const authUrl = this.authClient!.generateAuthUrl({
         access_type: "offline",
-        scope: this.scopes.join(" "),
+        scope: this.scopes,
       });
 
       const server = http.createServer((req, res) => {
@@ -39,14 +41,9 @@ export default class GoogleAuthProvider {
       });
       server.on("connection", (socket) => socket.unref());
       server.listen(this.authCallbackPort, () => {
-        console.log("Log in to Google by visiting this url:", authUrl);
+        this.log.attention("Log in to Google by visiting this url:", authUrl);
       });
     });
-  }
-
-  public async getAccessToken(): Promise<string | undefined | null> {
-    const client = await this.getClient();
-    return (await client.getAccessToken())?.token;
   }
 
   public async getClient(): Promise<Auth.OAuth2Client> {

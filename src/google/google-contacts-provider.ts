@@ -1,11 +1,15 @@
 import { GaxiosResponse } from "gaxios";
 import { Auth, google, people_v1 } from "googleapis";
+import { Logger } from "../logger";
 
 export default class GoogleContactsProvider {
   private peopleClient?: people_v1.People;
   public static readonly scopes = ["https://www.googleapis.com/auth/contacts.readonly"];
 
-  constructor(private readonly authClient: Auth.OAuth2Client) {}
+  constructor(
+    private readonly log: Logger,
+    private readonly authClient: Auth.OAuth2Client,
+  ) {}
 
   private async getClient(): Promise<people_v1.People> {
     if (this.peopleClient) {
@@ -33,7 +37,7 @@ export default class GoogleContactsProvider {
 
       contactGroups.push(...(response.data.contactGroups ?? []));
       nextPageToken = response.data.nextPageToken;
-      console.log(`Fetched ${response.data.contactGroups?.length ?? 0} contact groups`);
+      this.log.info(`Fetched ${response.data.contactGroups?.length ?? 0} contact groups`);
     } while (nextPageToken);
 
     return contactGroups;
@@ -55,7 +59,7 @@ export default class GoogleContactsProvider {
 
       contacts.push(...(response.data.connections ?? []));
       nextPageToken = response.data.nextPageToken;
-      console.log(`Fetched ${response.data.connections?.length ?? 0} contacts`);
+      this.log.info(`Fetched ${response.data.connections?.length ?? 0} contacts`);
     } while (nextPageToken);
 
     return contacts;

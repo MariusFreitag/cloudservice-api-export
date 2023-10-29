@@ -1,11 +1,15 @@
 import * as Cloudflare from "cloudflare";
+import { Logger } from "../logger";
 
 type ApiResponse = Promise<{ result?: object } | string>;
 
 export default class CloudflareZoneProvider {
-  constructor(private readonly authClient: Cloudflare) {}
+  constructor(
+    private readonly log: Logger,
+    private readonly authClient: Cloudflare,
+  ) {}
 
-  private request(path: string) {
+  private request(path: string): ApiResponse {
     const extendedClient = this.authClient as unknown as {
       _client: {
         request(
@@ -28,13 +32,14 @@ export default class CloudflareZoneProvider {
 
   public async getZones(): Promise<
     {
-      zone: unknown;
+      zone: { name: string } & unknown;
       dnsRecords: { data: unknown; export: string | undefined };
       settings: unknown;
       emails: { routing: unknown; rules: unknown };
     }[]
   > {
-    const zones = (await this.getResult(this.authClient.zones.browse())) as { id: string }[];
+    const zones = (await this.getResult(this.authClient.zones.browse())) as { id: string; name: string }[];
+    this.log.info("Fetched all zones");
 
     const result = [];
 
@@ -44,6 +49,7 @@ export default class CloudflareZoneProvider {
       const emailsRoutingResponse = this.request(`/zones/${zone.id}/email/routing`);
       const emailsRoutingRulesResponse = this.request(`/zones/${zone.id}/email/routing/rules`);
       const settingsResponse = this.authClient.zoneSettings.browse(zone.id);
+      this.log.info(`Fetched data for zone '${zone.name}'`);
 
       result.push({
         zone,

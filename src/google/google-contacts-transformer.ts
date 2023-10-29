@@ -2,7 +2,7 @@ import { createObjectCsvStringifier } from "csv-writer";
 import { people_v1 } from "googleapis";
 
 export default class GoogleContactsTransformer {
-  private sortContacts(contacts: people_v1.Schema$Person[]) {
+  private sortContacts(contacts: people_v1.Schema$Person[]): people_v1.Schema$Person[] {
     const clonedContacts = JSON.parse(JSON.stringify(contacts)) as people_v1.Schema$Person[];
     clonedContacts.sort((a, b) => {
       const aName = a.names?.[0];
@@ -18,7 +18,7 @@ export default class GoogleContactsTransformer {
     return clonedContacts;
   }
 
-  private formatDate(date: people_v1.Schema$Date | undefined) {
+  private formatDate(date: people_v1.Schema$Date | undefined): string | undefined {
     if (!date) {
       return undefined;
     }
@@ -28,7 +28,7 @@ export default class GoogleContactsTransformer {
     return `${year}-${month}-${day}`;
   }
 
-  private formatPhoto(photos: people_v1.Schema$Photo | undefined) {
+  private formatPhoto(photos: people_v1.Schema$Photo | undefined): string | undefined {
     return photos?.url?.includes("/contacts/") ? photos.url.replace(/=s100$/, "") : undefined;
   }
 
@@ -139,11 +139,11 @@ export default class GoogleContactsTransformer {
     return result;
   }
 
-  private postProcessRecords(headers: string[], records: Record<string, string | undefined | null>[]) {
+  private postProcessRecords(headers: string[], records: Record<string, string | undefined | null>[]): void {
     for (const record of records) {
       for (const [key, value] of Object.entries(record)) {
         // Replace undefined and null values with empty strings
-        record[key as keyof typeof record] ??= "";
+        record[key] ??= "";
 
         if (!headers.includes(key)) {
           // We could also dynamically add the header, but this is an additional safeguard to get a consistent format

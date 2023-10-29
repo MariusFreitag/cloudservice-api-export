@@ -1,5 +1,6 @@
 import { GaxiosResponse } from "gaxios";
 import { Auth, calendar_v3, google } from "googleapis";
+import { Logger } from "../logger";
 
 export default class GoogleCalendarProvider {
   private calendarClient?: calendar_v3.Calendar;
@@ -8,7 +9,10 @@ export default class GoogleCalendarProvider {
     "https://www.googleapis.com/auth/calendar.events.readonly",
   ];
 
-  constructor(private readonly authClient: Auth.OAuth2Client) {}
+  constructor(
+    private readonly log: Logger,
+    private readonly authClient: Auth.OAuth2Client,
+  ) {}
 
   private async getClient(): Promise<calendar_v3.Calendar> {
     if (this.calendarClient) {
@@ -36,7 +40,7 @@ export default class GoogleCalendarProvider {
 
       calendarListEntries.push(...(response.data.items ?? []));
       nextPageToken = response.data.nextPageToken;
-      console.log(`Fetched ${response.data.items?.length ?? 0} calendar list entries`);
+      this.log.info(`Fetched ${response.data.items?.length ?? 0} calendar list entries`);
     } while (nextPageToken);
 
     return calendarListEntries;
@@ -56,7 +60,7 @@ export default class GoogleCalendarProvider {
 
       events.push(...(response.data.items ?? []));
       nextPageToken = response.data.nextPageToken;
-      console.log(`Fetched ${response.data.items?.length ?? 0} events for calendar ${calendarId}`);
+      this.log.info(`Fetched ${response.data.items?.length ?? 0} events for calendar ${calendarId}`);
     } while (nextPageToken);
 
     return events;

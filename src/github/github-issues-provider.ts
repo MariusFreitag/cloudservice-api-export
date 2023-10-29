@@ -1,11 +1,16 @@
+import { Logger } from "../logger";
+
 type GitHubCredentials = {
   apiUrl: string;
   username: string;
   accessToken: string;
 };
 
-export default class GitHubIssueProvider {
-  constructor(private readonly credentials: GitHubCredentials) {}
+export default class GitHubIssuesProvider {
+  constructor(
+    private readonly log: Logger,
+    private readonly credentials: GitHubCredentials,
+  ) {}
 
   private async request(path: string, relative: boolean = true): Promise<unknown[]> {
     const response = await fetch((relative ? this.credentials.apiUrl : "") + path, {
@@ -23,10 +28,14 @@ export default class GitHubIssueProvider {
 
     // Fetch issues themselves
     for (let page = 1; ; page++) {
-      const response = await this.request(`/repos/${repository}/issues?page=${page}`);
+      const response = (await this.request(`/repos/${repository}/issues?page=${page}`)) as ({
+        comments: number;
+        comments_url: string;
+        comments_data: unknown[];
+      } & unknown)[];
 
       if (response.length) {
-        console.log(`Fetched ${response.length} issues for repository ${repository}'`);
+        this.log.info(`Fetched ${response.length} issues for repository ${repository}'`);
         issues.push(...response);
       } else {
         break;
@@ -34,7 +43,7 @@ export default class GitHubIssueProvider {
     }
 
     // Fetch comments of issues
-    for (const issue of issues as { comments: number; comments_url: string; comments_data: unknown[] }[]) {
+    for (const issue of issues) {
       if (issue.comments > 0) {
         const response = await this.request(issue.comments_url, false);
         issue.comments_data = response;

@@ -10,7 +10,7 @@
     "format": "prettier . --write",
     "postinstall": "npm run build",
     "lint": "eslint .",
-    "start": "node dist/main.js",
+    "start": "node --no-deprecation dist/main.js",
     "watch": "tsc --watch",
     "prepare": "husky install"
   },

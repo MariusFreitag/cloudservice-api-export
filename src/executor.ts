@@ -55,7 +55,7 @@ export type ExecutionStep =
     };
 
 /**
- * Handles the successive execution of export steps.
+ * Handles the parallel execution of export steps.
  */
 export default class Executor {
   public constructor(
@@ -180,21 +180,20 @@ export default class Executor {
     return result;
   }
 
-  public async execute() {
+  public async execute(): Promise<object[]> {
     this.log.normal("Executing");
-    for (const step of this.config.steps) {
+    const promises = this.config.steps.map((step) => {
       switch (step.type) {
         case "Cloudflare":
-          await this.executeCloudflare(step);
-          break;
+          return this.executeCloudflare(step);
         case "GitHub":
-          await this.executeGitHub(step);
-          break;
+          return this.executeGitHub(step);
         case "Google":
-          await this.executeGoogle(step);
-          break;
+          return this.executeGoogle(step);
       }
-    }
+    });
+    const result = await Promise.all(promises);
     this.log.success("Done");
+    return result;
   }
 }

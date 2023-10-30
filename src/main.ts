@@ -1,10 +1,26 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
 import Executor, { ExecutionStep } from "./executor";
-import { createLogger } from "./logger";
+import { LogLevel, createLogger } from "./logger";
 
 /**
- * Points to `<project-root>/private/config.json`
+ * Type of the configuration JSON file that
+ * can be provided as first and only CLI argument.
+ *
+ * Default path: {@link defaultConfigPath}
+ *
+ */
+export type Configuration = {
+  /** default: `{}` */
+  variables: Record<string, string>;
+  /** default: "normal" */
+  logLevel: LogLevel;
+  /** default: see {@link defaultSteps} */
+  steps: ExecutionStep[];
+};
+
+/**
+ * Points to `<project-root>/private/config.json`.
  */
 const defaultConfigPath = join(__dirname, "..", "private", "config.json");
 
@@ -19,9 +35,7 @@ const defaultConfigPath = join(__dirname, "..", "private", "config.json");
  *     "GITHUB_API_URL": "",
  *     "GITHUB_USERNAME": "",
  *     "GITHUB_TOKEN": "",
- *     "GITHUB_REPO_1": "",
- *     "GITHUB_REPO_2": "",
- *     "GITHUB_REPO_3": "",
+ *     "GITHUB_REPO": "",
  *     "GOOGLE_CLIENT_ID": "",
  *     "GOOGLE_CLIENT_SECRET": ""
  *   }
@@ -51,7 +65,7 @@ const defaultSteps: ExecutionStep[] = [
       username: "$GITHUB_USERNAME",
       accessToken: "$GITHUB_TOKEN",
     },
-    repositories: ["$GITHUB_REPO_1", "$GITHUB_REPO_2", "$GITHUB_REPO_3"],
+    repositories: ["$GITHUB_REPO"],
     features: {
       issueComments: true,
     },
@@ -82,10 +96,13 @@ const defaultSteps: ExecutionStep[] = [
 ];
 
 async function main() {
+  // Read configuration and apply defaults
   const configPath = process.argv[2] ?? defaultConfigPath;
-  const config = JSON.parse(await readFile(configPath, "utf-8"));
+  const config: Configuration = JSON.parse(await readFile(configPath, "utf-8"));
+  config.variables ??= {};
+  config.logLevel ??= "normal";
   config.steps ??= defaultSteps;
-  const variables = config.variables as Record<string, string>;
+  const variables = config.variables;
 
   // Replace variables in step config
   let rawSteps = JSON.stringify(config.steps);
@@ -96,7 +113,8 @@ async function main() {
     );
   }
 
-  const executor = new Executor(createLogger("Executor"), { steps: JSON.parse(rawSteps) });
+  // Execute export steps
+  const executor = new Executor(createLogger("Executor", config.logLevel), { steps: JSON.parse(rawSteps) });
   await executor.execute();
 }
 main();

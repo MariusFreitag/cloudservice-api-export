@@ -6,6 +6,9 @@ export type GitHubCredentials = {
   accessToken: string;
 };
 
+/**
+ * Implements the exporting of GitHub issues and their comments to JSON.
+ */
 export default class GitHubIssuesProvider {
   constructor(
     private readonly log: Logger,
@@ -37,7 +40,7 @@ export default class GitHubIssuesProvider {
       } & unknown)[];
 
       if (response.length) {
-        this.log.info(`Fetched ${response.length} issues for repository ${repository}'`);
+        this.log.info(`Fetched ${response.length} issues for repository '${repository}'`);
         issues.push(...response);
       } else {
         break;

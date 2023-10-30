@@ -1,6 +1,10 @@
 import { createObjectCsvStringifier } from "csv-writer";
 import { people_v1 } from "googleapis";
 
+/**
+ * Allows to transform the Google contacts export into the CSV format
+ * provided when manually exporting contacts using the Google web UI.
+ */
 export default class GoogleContactsTransformer {
   private sortContacts(contacts: people_v1.Schema$Person[]): people_v1.Schema$Person[] {
     const clonedContacts = JSON.parse(JSON.stringify(contacts)) as people_v1.Schema$Person[];

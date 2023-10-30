@@ -10,6 +10,11 @@ export type GoogleAuthCredentials = {
   };
 };
 
+/**
+ * Manages the authorization of an OAuth client for the Google API.
+ * If required, it will spawn a HTTP server to listen for OAuth callbacks.
+ * Access and refresh tokens will be cached.
+ */
 export default class GoogleAuthProvider {
   private authClient?: Auth.OAuth2Client;
 

@@ -10,7 +10,6 @@ import GoogleContactsTransformer from "./google/google-contacts-transformer";
 import { Logger } from "./logger";
 
 export type ExecutionConfig = {
-  rootFolder?: string;
   steps: ExecutionStep[];
 };
 
@@ -55,6 +54,9 @@ export type ExecutionStep =
       };
     };
 
+/**
+ * Handles the successive execution of export steps.
+ */
 export default class Executor {
   public constructor(
     private readonly log: Logger,

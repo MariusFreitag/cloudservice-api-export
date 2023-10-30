@@ -2,6 +2,10 @@ import { GaxiosResponse } from "gaxios";
 import { Auth, google, people_v1 } from "googleapis";
 import { Logger } from "../logger";
 
+/**
+ * Implements the exporting of all Google contact groups and contacts
+ * of the authenticated user to JSON.
+ */
 export default class GoogleContactsProvider {
   private peopleClient?: people_v1.People;
   public static readonly scopes = ["https://www.googleapis.com/auth/contacts.readonly"];

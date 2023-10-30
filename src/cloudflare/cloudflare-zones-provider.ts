@@ -3,6 +3,11 @@ import { Logger } from "../logger";
 
 type ApiResponse = Promise<{ result?: object } | string>;
 
+/**
+ * Implements the exporting of all Cloudflare zones,
+ * their DNS record and corresponding BIND zone files,
+ * email routing configs, email routing rules, and general settings.
+ */
 export default class CloudflareZoneProvider {
   constructor(
     private readonly log: Logger,

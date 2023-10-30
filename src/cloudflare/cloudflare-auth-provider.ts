@@ -4,6 +4,9 @@ export type CloudflareAuthCredentials = {
   token: string;
 };
 
+/**
+ * Manages the authorization of a Cloudflare API client.
+ */
 export default class CloudflareAuthProvider {
   private authClient?: Cloudflare;
 

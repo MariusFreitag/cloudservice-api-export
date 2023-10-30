@@ -20,7 +20,7 @@ export type Configuration = {
 };
 
 /**
- * Points to `<project-root>/private/config.json`.
+ * Points to `{project-root}/private/config.json`.
  */
 const defaultConfigPath = join(__dirname, "..", "private", "config.json");
 

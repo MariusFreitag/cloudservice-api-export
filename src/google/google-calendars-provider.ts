@@ -3,7 +3,7 @@ import { Auth, calendar_v3, google } from "googleapis";
 import { Logger } from "../logger";
 
 /**
- * Implements the exporting of all Google Calendars and their events
+ * Implements the exporting of all Google calendars and their events
  * of the authenticated user to JSON and iCalendar formats.
  */
 export default class GoogleCalendarsProvider {

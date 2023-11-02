@@ -77,10 +77,8 @@ const defaultSteps: ExecutionStep[] = [
     type: "Google",
     id: "Google",
     credentials: {
-      installed: {
-        client_id: "$GOOGLE_CLIENT_ID",
-        client_secret: "$GOOGLE_CLIENT_SECRET",
-      },
+      clientId: "$GOOGLE_CLIENT_ID",
+      clientSecret: "$GOOGLE_CLIENT_SECRET",
     },
     tokenCachePath: "$OUTPUT_DIR/google/google-token-cache.json",
     authPort: "3124",

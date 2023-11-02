@@ -4,10 +4,8 @@ import * as http from "http";
 import { Logger } from "../logger";
 
 export type GoogleAuthCredentials = {
-  installed: {
-    client_secret: string;
-    client_id: string;
-  };
+  clientSecret: string;
+  clientId: string;
 };
 
 /**
@@ -56,10 +54,9 @@ export default class GoogleAuthProvider {
       return this.authClient;
     }
 
-    const { client_secret, client_id } = this.credentials.installed;
     this.authClient = new google.auth.OAuth2(
-      client_id,
-      client_secret,
+      this.credentials.clientId,
+      this.credentials.clientSecret,
       `http://localhost:${this.authCallbackPort}`,
     );
 

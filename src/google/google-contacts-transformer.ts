@@ -4,6 +4,8 @@ import { people_v1 } from "googleapis";
 /**
  * Allows to transform the Google contacts export into the CSV format
  * provided when manually exporting contacts using the Google web UI.
+ *
+ * This also stabilizes the output to allow incremental backups.
  */
 export default class GoogleContactsTransformer {
   private sortContacts(contacts: people_v1.Schema$Person[]): people_v1.Schema$Person[] {
@@ -19,6 +21,24 @@ export default class GoogleContactsTransformer {
         aName?.displayName && bName?.displayName ? aName.displayName.localeCompare(bName.displayName) : 0;
       return givenNameComparison || familyNameComparison || displayNameComparison;
     });
+
+    for (const contact of clonedContacts) {
+      contact.memberships?.sort(
+        (a, b) =>
+          a.contactGroupMembership?.contactGroupResourceName?.localeCompare(
+            b.contactGroupMembership?.contactGroupResourceName ?? "",
+          ) ?? 0,
+      );
+      contact.emailAddresses?.sort((a, b) => a.formattedType?.localeCompare(b.formattedType ?? "") ?? 0);
+      contact.phoneNumbers?.sort((a, b) => a.formattedType?.localeCompare(b.formattedType ?? "") ?? 0);
+      contact.addresses?.sort((a, b) => a.formattedType?.localeCompare(b.formattedType ?? "") ?? 0);
+      contact.organizations?.sort((a, b) => a.formattedType?.localeCompare(b.type ?? "") ?? 0);
+      contact.organizations?.sort((a, b) => a.formattedType?.localeCompare(b.formattedType ?? "") ?? 0);
+      contact.relations?.sort((a, b) => a.formattedType?.localeCompare(b.formattedType ?? "") ?? 0);
+      contact.urls?.sort((a, b) => a.formattedType?.localeCompare(b.formattedType ?? "") ?? 0);
+      contact.events?.sort((a, b) => a.formattedType?.localeCompare(b.formattedType ?? "") ?? 0);
+    }
+
     return clonedContacts;
   }
 

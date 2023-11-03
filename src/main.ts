@@ -50,6 +50,7 @@ const defaultSteps: ExecutionStep[] = [
       token: "$CLOUDFLARE_TOKEN",
     },
     features: {
+      stabilizeData: false,
       details: true,
     },
     target: {
@@ -83,6 +84,7 @@ const defaultSteps: ExecutionStep[] = [
     tokenCachePath: "$OUTPUT_DIR/google/google-token-cache.json",
     authPort: "3124",
     features: {
+      stabilizeData: false,
       calendars: true,
       contacts: true,
     },

@@ -19,6 +19,7 @@ export type ExecutionStep =
       id: string;
       credentials: CloudflareAuthCredentials;
       features: {
+        stabilizeData: boolean;
         details: boolean;
       };
       target: {
@@ -45,6 +46,7 @@ export type ExecutionStep =
       tokenCachePath: string;
       authPort: string;
       features: {
+        stabilizeData: boolean;
         contacts: boolean;
         calendars: boolean;
       };
@@ -76,7 +78,7 @@ export default class Executor {
     const cloudflareAuth = await new CloudflareAuthProvider(step.credentials).getClient();
 
     const zoneProvider = new CloudflareZoneProvider(this.log.createLogger(step.id), cloudflareAuth);
-    const zones = await zoneProvider.getZones(step.features.details);
+    const zones = await zoneProvider.getZones(step.features.details, step.features.stabilizeData);
 
     if (step.target.overview) {
       await this.writeFile(join(step.target.overview, "zones.json"), JSON.stringify(zones, null, 2));
@@ -139,7 +141,7 @@ export default class Executor {
         this.log.createLogger(step.id + "-Calendars"),
         googleAuth,
       );
-      const calendars = await calendarsProvider.getCalendars();
+      const calendars = await calendarsProvider.getCalendars(step.features.stabilizeData);
 
       result.calendars = calendars;
 

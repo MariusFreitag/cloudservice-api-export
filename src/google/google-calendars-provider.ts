@@ -51,7 +51,7 @@ export default class GoogleCalendarsProvider {
     return calendarListEntries;
   }
 
-  public async getEvents(calendarId: string): Promise<calendar_v3.Schema$Event[]> {
+  public async getEvents(calendarId: string, stabilizeData: boolean): Promise<calendar_v3.Schema$Event[]> {
     const service = await this.getClient();
 
     const events = [];
@@ -69,6 +69,13 @@ export default class GoogleCalendarsProvider {
       this.log.info(`Fetched ${response.data.items?.length ?? 0} events for calendar ${calendarId}`);
     } while (nextPageToken);
 
+    if (stabilizeData) {
+      // The event reminder sort order returned by Google seems to be random by default
+      for (const event of events) {
+        event.reminders?.overrides?.sort((a, b) => (a.minutes ?? 0) - (b.minutes ?? 0));
+      }
+    }
+
     return events;
   }
 
@@ -81,7 +88,7 @@ export default class GoogleCalendarsProvider {
     return await response.text();
   }
 
-  public async getCalendars(): Promise<
+  public async getCalendars(stabilizeData: boolean): Promise<
     {
       calendar: calendar_v3.Schema$CalendarListEntry;
       events: { data: calendar_v3.Schema$Event[]; export: string };
@@ -95,7 +102,7 @@ export default class GoogleCalendarsProvider {
       result.push({
         calendar,
         events: {
-          data: await this.getEvents(calendar.id ?? ""),
+          data: await this.getEvents(calendar.id ?? "", stabilizeData),
           export: await this.getCalDavExport(calendar.id ?? ""),
         },
       });

@@ -54,8 +54,8 @@ const defaultSteps: ExecutionStep[] = [
       details: true,
     },
     target: {
-      overview: "$OUTPUT_DIR/cloudflare",
-      details: "$OUTPUT_DIR/cloudflare",
+      overview: "$OUTPUT_DIR/cloudflare/zones.json",
+      exportDirectory: "$OUTPUT_DIR/cloudflare",
     },
   },
   {
@@ -71,7 +71,7 @@ const defaultSteps: ExecutionStep[] = [
       issueComments: true,
     },
     target: {
-      issues: "$OUTPUT_DIR/github",
+      issuesDirectory: "$OUTPUT_DIR/github",
     },
   },
   {
@@ -89,8 +89,10 @@ const defaultSteps: ExecutionStep[] = [
       contacts: true,
     },
     target: {
-      calendars: "$OUTPUT_DIR/google",
-      contacts: "$OUTPUT_DIR/google",
+      calendarsOverview: "$OUTPUT_DIR/google/calendars.json",
+      calendarsExportDirectory: "$OUTPUT_DIR/google",
+      contactsOverview: "$OUTPUT_DIR/google/contacts.json",
+      contactsExport: "$OUTPUT_DIR/google/contacts.csv",
     },
   },
 ];

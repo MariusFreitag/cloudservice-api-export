@@ -26,7 +26,7 @@ export type ExecutionStep =
       features: CloudflareZonesFeatures;
       target: {
         overview?: string;
-        details?: string;
+        exportDirectory?: string;
       };
     }
   | {
@@ -36,7 +36,7 @@ export type ExecutionStep =
       repositories: string[];
       features: GitHubIssuesFeatures;
       target: {
-        issues?: string;
+        issuesDirectory?: string;
       };
     }
   | {
@@ -47,8 +47,10 @@ export type ExecutionStep =
       authPort: string;
       features: GoogleFeatures;
       target: {
-        calendars?: string;
-        contacts?: string;
+        calendarsOverview?: string;
+        calendarsExportDirectory?: string;
+        contactsOverview?: string;
+        contactsExport?: string;
       };
     };
 
@@ -61,7 +63,7 @@ export default class Executor {
     private readonly config: ExecutionConfig,
   ) {}
 
-  private async writeFile(path: string, data: string | object) {
+  private async writeFile(path: string, data: string | object): Promise<void> {
     await mkdir(dirname(path), { recursive: true }).catch(() => {});
     await writeFile(path, typeof data === "string" ? data : JSON.stringify(data, null, 2));
     this.log.info(`Wrote to ${path}`);
@@ -80,11 +82,11 @@ export default class Executor {
     const zones = await zoneProvider.getZones();
 
     if (step.target.overview) {
-      await this.writeFile(join(step.target.overview, "zones.json"), JSON.stringify(zones, null, 2));
+      await this.writeFile(step.target.overview, JSON.stringify(zones, null, 2));
     }
-    if (step.features.details && step.target.details) {
+    if (step.features.details && step.target.exportDirectory) {
       for (const zone of zones) {
-        const outputPath = `${step.target.details}/${zone.zone.name}.txt`;
+        const outputPath = join(step.target.exportDirectory, `${zone.zone.name}.dnsrecords.txt`);
         await this.writeFile(outputPath, zone.dnsRecords?.export ?? "");
       }
     }
@@ -108,8 +110,8 @@ export default class Executor {
       const issues = await issuesProvider.getIssues(repository);
       result[repository] = issues;
 
-      if (step.target.issues) {
-        const outputPath = `${step.target.issues}/${repository.replace("/", "-")}.ghissues.json`;
+      if (step.target.issuesDirectory) {
+        const outputPath = join(step.target.issuesDirectory, `${repository.replace("/", "-")}.ghissues.json`);
         await this.writeFile(outputPath, JSON.stringify(issues, null, 2));
       }
     }
@@ -122,7 +124,7 @@ export default class Executor {
     await mkdir(dirname(step.tokenCachePath), { recursive: true }).catch(() => {});
 
     const combinedGoogleProvider = new CombinedGoogleProvider(
-      this.log.createLogger(step.id + "-Auth"),
+      this.log.createLogger(step.id),
       step.credentials,
       step.tokenCachePath,
       step.authPort,
@@ -131,29 +133,30 @@ export default class Executor {
 
     const data = await combinedGoogleProvider.getData();
 
-    if (step.features.calendars && step.target.calendars) {
-      const jsonOutputPath = join(step.target.calendars, "calendar.json");
-      await this.writeFile(jsonOutputPath, JSON.stringify(data.calendars, null, 2));
+    if (step.features.calendars && step.target.calendarsOverview) {
+      await this.writeFile(step.target.calendarsOverview, JSON.stringify(data.calendars, null, 2));
+    }
 
+    if (step.features.calendars && step.target.calendarsExportDirectory) {
       for (const calendar of data.calendars ?? []) {
-        const outputPath = join(step.target.calendars, `${calendar.calendar.id}.ics`);
+        const outputPath = join(step.target.calendarsExportDirectory, `${calendar.calendar.id}.ics`);
         await this.writeFile(outputPath, calendar.events.export);
       }
     }
 
-    if (step.features.contacts && step.target.contacts) {
-      const jsonOutputPath = join(step.target.contacts, "contacts.json");
+    if (step.features.contacts && step.target.contactsOverview) {
       await this.writeFile(
-        jsonOutputPath,
+        step.target.contactsOverview,
         JSON.stringify(
           { contactGroups: data.contacts?.contactGroups, contacts: data.contacts?.contacts },
           null,
           2,
         ),
       );
+    }
 
-      const csvOutputPath = join(step.target.contacts, "contacts.csv");
-      await this.writeFile(csvOutputPath, data.contacts?.csv ?? "");
+    if (step.features.contacts && step.target.contactsExport) {
+      await this.writeFile(step.target.contactsExport, data.contacts?.csv ?? "");
     }
 
     return data;

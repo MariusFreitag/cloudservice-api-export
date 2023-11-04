@@ -31,7 +31,7 @@ export default class CombinedGoogleProvider {
   ) {}
 
   public async getData(): Promise<GoogleData> {
-    this.log.normal(`Starting to authorize with Google`);
+    this.log.normal("Starting to authorize with Google");
     const googleAuth = await new GoogleAuthProvider(
       this.log.createSubLogger("-Auth"),
       this.credentials,
@@ -46,7 +46,7 @@ export default class CombinedGoogleProvider {
     const result: GoogleData = {};
 
     if (this.features.calendars) {
-      this.log.normal(`Starting to export Google Calendars`);
+      this.log.normal("Starting to export Google Calendars");
       const calendarsProvider = new GoogleCalendarsProvider(
         this.log.createSubLogger("-Calendars"),
         googleAuth,
@@ -58,12 +58,12 @@ export default class CombinedGoogleProvider {
     }
 
     if (this.features.contacts) {
-      this.log.normal(`Starting to export Google Contacts`);
+      this.log.normal("Starting to export Google Contacts");
       const peopleProvider = new GoogleContactsProvider(this.log.createSubLogger("-Contacts"), googleAuth);
       const contactGroups = await peopleProvider.getContactGroups();
       const contacts = await peopleProvider.getContacts();
 
-      this.log.normal(`Starting to transform Google Contacts to CSV`);
+      this.log.normal("Starting to transform Google Contacts to CSV");
       const contactsCsv = await new GoogleContactsTransformer().generateContactsCsv(contactGroups, contacts);
 
       result.contacts = { contactGroups, contacts, csv: contactsCsv };

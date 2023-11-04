@@ -10,10 +10,8 @@ import GitHubIssuesProvider, {
   GitHubIssuesData,
   GitHubIssuesFeatures,
 } from "./github/github-issues-provider";
-import GoogleAuthProvider, { GoogleAuthCredentials } from "./google/google-auth-provider";
-import GoogleCalendarsProvider from "./google/google-calendars-provider";
-import GoogleContactsProvider from "./google/google-contacts-provider";
-import GoogleContactsTransformer from "./google/google-contacts-transformer";
+import CombinedGoogleProvider, { GoogleData, GoogleFeatures } from "./google/combined-google-provider";
+import { GoogleAuthCredentials } from "./google/google-auth-provider";
 import { Logger } from "./logger";
 
 export type ExecutionConfig = {
@@ -47,11 +45,7 @@ export type ExecutionStep =
       credentials: GoogleAuthCredentials;
       tokenCachePath: string;
       authPort: string;
-      features: {
-        stabilizeData: boolean;
-        contacts: boolean;
-        calendars: boolean;
-      };
+      features: GoogleFeatures;
       target: {
         calendars?: string;
         contacts?: string;
@@ -123,74 +117,46 @@ export default class Executor {
     return result;
   }
 
-  private async executeGoogle(step: Extract<ExecutionStep, { type: "Google" }>): Promise<{
-    contacts?: {
-      contactGroups: Awaited<ReturnType<GoogleContactsProvider["getContactGroups"]>>;
-      contacts: Awaited<ReturnType<GoogleContactsProvider["getContacts"]>>;
-      csv: string;
-    };
-    calendars?: Awaited<ReturnType<GoogleCalendarsProvider["getFullCalendarData"]>>;
-  }> {
-    this.log.normal(`Starting to authorize ${step.id}`);
+  private async executeGoogle(step: Extract<ExecutionStep, { type: "Google" }>): Promise<GoogleData> {
+    this.log.normal(`Starting to export ${step.id}`);
     await mkdir(dirname(step.tokenCachePath), { recursive: true }).catch(() => {});
-    const googleAuth = await new GoogleAuthProvider(
+
+    const combinedGoogleProvider = new CombinedGoogleProvider(
       this.log.createLogger(step.id + "-Auth"),
       step.credentials,
       step.tokenCachePath,
       step.authPort,
-      [
-        ...(step.features.calendars ? GoogleCalendarsProvider.scopes : []),
-        ...(step.features.contacts ? GoogleContactsProvider.scopes : []),
-      ],
-    ).getClient();
+      step.features,
+    );
 
-    const result: Awaited<ReturnType<Executor["executeGoogle"]>> = {};
+    const data = await combinedGoogleProvider.getData();
 
-    if (step.features.calendars) {
-      this.log.normal(`Starting to export Calendars of ${step.id}`);
-      const calendarsProvider = new GoogleCalendarsProvider(
-        this.log.createLogger(step.id + "-Calendars"),
-        googleAuth,
-      );
-      const calendars = await calendarsProvider.getFullCalendarData(step.features.stabilizeData);
+    if (step.features.calendars && step.target.calendars) {
+      const jsonOutputPath = join(step.target.calendars, "calendar.json");
+      await this.writeFile(jsonOutputPath, JSON.stringify(data.calendars, null, 2));
 
-      result.calendars = calendars;
-
-      if (step.target.calendars) {
-        const jsonOutputPath = join(step.target.calendars, "calendar.json");
-        await this.writeFile(jsonOutputPath, JSON.stringify(calendars, null, 2));
-
-        for (const calendar of calendars) {
-          const outputPath = join(step.target.calendars, `${calendar.calendar.id}.ics`);
-          await this.writeFile(outputPath, calendar.events.export);
-        }
+      for (const calendar of data.calendars ?? []) {
+        const outputPath = join(step.target.calendars, `${calendar.calendar.id}.ics`);
+        await this.writeFile(outputPath, calendar.events.export);
       }
     }
 
-    if (step.features.contacts) {
-      this.log.normal(`Starting to export Contacts of ${step.id}`);
-      const peopleProvider = new GoogleContactsProvider(
-        this.log.createLogger(step.id + "-Contacts"),
-        googleAuth,
+    if (step.features.contacts && step.target.contacts) {
+      const jsonOutputPath = join(step.target.contacts, "contacts.json");
+      await this.writeFile(
+        jsonOutputPath,
+        JSON.stringify(
+          { contactGroups: data.contacts?.contactGroups, contacts: data.contacts?.contacts },
+          null,
+          2,
+        ),
       );
-      const contactGroups = await peopleProvider.getContactGroups();
-      const contacts = await peopleProvider.getContacts();
 
-      this.log.normal(`Starting to transform Contacts of ${step.id} to CSV`);
-      const contactsCsv = await new GoogleContactsTransformer().generateContactsCsv(contactGroups, contacts);
-
-      result.contacts = { contactGroups, contacts, csv: contactsCsv };
-
-      if (step.target.contacts) {
-        const jsonOutputPath = join(step.target.contacts, "contacts.json");
-        await this.writeFile(jsonOutputPath, JSON.stringify({ contactGroups, contacts }, null, 2));
-
-        const csvOutputPath = join(step.target.contacts, "contacts.csv");
-        await this.writeFile(csvOutputPath, contactsCsv);
-      }
+      const csvOutputPath = join(step.target.contacts, "contacts.csv");
+      await this.writeFile(csvOutputPath, data.contacts?.csv ?? "");
     }
 
-    return result;
+    return data;
   }
 
   public async execute(): Promise<

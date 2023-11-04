@@ -2,6 +2,10 @@ import { GaxiosResponse } from "gaxios";
 import { Auth, calendar_v3, google } from "googleapis";
 import { Logger } from "../logger";
 
+export type GoogleCalendarsFeatures = {
+  stabilizeData: boolean;
+};
+
 /**
  * Implements the exporting of all Google calendars and their events
  * of the authenticated user to JSON and iCalendar formats.
@@ -16,6 +20,7 @@ export default class GoogleCalendarsProvider {
   constructor(
     private readonly log: Logger,
     private readonly authClient: Auth.OAuth2Client,
+    private readonly features: GoogleCalendarsFeatures,
   ) {}
 
   private async getClient(): Promise<calendar_v3.Calendar> {
@@ -51,7 +56,7 @@ export default class GoogleCalendarsProvider {
     return calendarListEntries;
   }
 
-  public async getEvents(calendarId: string, stabilizeData: boolean): Promise<calendar_v3.Schema$Event[]> {
+  public async getEvents(calendarId: string): Promise<calendar_v3.Schema$Event[]> {
     const service = await this.getClient();
 
     const events = [];
@@ -69,7 +74,7 @@ export default class GoogleCalendarsProvider {
       this.log.info(`Fetched ${response.data.items?.length ?? 0} events for calendar ${calendarId}`);
     } while (nextPageToken);
 
-    if (stabilizeData) {
+    if (this.features.stabilizeData) {
       // The event reminder sort order returned by Google seems to be random by default
       for (const event of events) {
         event.reminders?.overrides?.sort((a, b) => (a.minutes ?? 0) - (b.minutes ?? 0));
@@ -88,7 +93,7 @@ export default class GoogleCalendarsProvider {
     return await response.text();
   }
 
-  public async getFullCalendarData(stabilizeData: boolean): Promise<
+  public async getFullCalendarData(): Promise<
     {
       calendar: calendar_v3.Schema$CalendarListEntry;
       events: { data: calendar_v3.Schema$Event[]; export: string };
@@ -102,7 +107,7 @@ export default class GoogleCalendarsProvider {
       result.push({
         calendar,
         events: {
-          data: await this.getEvents(calendar.id ?? "", stabilizeData),
+          data: await this.getEvents(calendar.id ?? ""),
           export: await this.getCalDavExport(calendar.id ?? ""),
         },
       });

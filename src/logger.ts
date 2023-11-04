@@ -4,6 +4,7 @@ export type Logger = {
   success(...message: string[] | number[]): void;
   attention(...message: string[] | number[]): void;
   createLogger(prefix: string): Logger;
+  createSubLogger(prefixSuffix: string): Logger;
 };
 
 export type LogLevel = "verbose" | "normal" | "silent";
@@ -32,5 +33,6 @@ export function createLogger(prefix: string, logLevel: LogLevel): Logger {
       print(prefix, "\x1b[1m\x1b[32m", logLevel !== "silent", message),
     attention: (...message: string[] | number[]) => print(prefix, "\x1b[1m\x1b[34m", true, message),
     createLogger: (prefix) => createLogger(prefix, logLevel),
+    createSubLogger: (prefixSuffix) => createLogger(prefix + prefixSuffix, logLevel),
   };
 }

@@ -45,6 +45,7 @@ export type ExecutionStep =
       credentials: GoogleAuthCredentials;
       tokenCachePath: string;
       authPort: string;
+      calendarInclusionList: string[] | null;
       features: GoogleFeatures;
       target: {
         calendarsOverview?: string;
@@ -128,6 +129,7 @@ export default class Executor {
       step.credentials,
       step.tokenCachePath,
       step.authPort,
+      step.calendarInclusionList,
       step.features,
     );
 
@@ -140,7 +142,7 @@ export default class Executor {
     if (step.features.calendars && step.target.calendarsExportDirectory) {
       for (const calendar of data.calendars ?? []) {
         const outputPath = join(step.target.calendarsExportDirectory, `${calendar.calendar.id}.ics`);
-        await this.writeFile(outputPath, calendar.events.export);
+        await this.writeFile(outputPath, calendar.events.export ?? "");
       }
     }
 

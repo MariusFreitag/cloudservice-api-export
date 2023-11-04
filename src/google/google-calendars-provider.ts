@@ -4,6 +4,8 @@ import { Logger } from "../logger";
 
 export type GoogleCalendarsFeatures = {
   stabilizeData: boolean;
+  eventDetails: boolean;
+  calendarExport: boolean;
 };
 
 /**
@@ -75,9 +77,13 @@ export default class GoogleCalendarsProvider {
     } while (nextPageToken);
 
     if (this.features.stabilizeData) {
-      // The event reminder sort order returned by Google seems to be random by default
       for (const event of events) {
+        // The event reminder sort order returned by Google seems to be random
         event.reminders?.overrides?.sort((a, b) => (a.minutes ?? 0) - (b.minutes ?? 0));
+        // The contact photo URL changes constantly
+        if (event.gadget?.preferences?.["goo.contactsPhotoUrl"]) {
+          event.gadget.preferences["goo.contactsPhotoUrl"] = "";
+        }
       }
     }
 
@@ -93,13 +99,16 @@ export default class GoogleCalendarsProvider {
     return await response.text();
   }
 
-  public async getFullCalendarData(): Promise<
+  public async getFullCalendarData(calendarInclusionList: string[] | null): Promise<
     {
       calendar: calendar_v3.Schema$CalendarListEntry;
-      events: { data: calendar_v3.Schema$Event[]; export: string };
+      events: { data: calendar_v3.Schema$Event[] | null; export: string | null };
     }[]
   > {
-    const calendars = await this.getCalendarListEntries();
+    let calendars = await this.getCalendarListEntries();
+    if (calendarInclusionList !== null) {
+      calendars = calendars.filter((calendar) => calendar.id && calendarInclusionList.includes(calendar.id));
+    }
 
     const result = [];
 
@@ -107,8 +116,8 @@ export default class GoogleCalendarsProvider {
       result.push({
         calendar,
         events: {
-          data: await this.getEvents(calendar.id ?? ""),
-          export: await this.getCalDavExport(calendar.id ?? ""),
+          data: this.features.eventDetails ? await this.getEvents(calendar.id ?? "") : null,
+          export: this.features.calendarExport ? await this.getCalDavExport(calendar.id ?? "") : null,
         },
       });
     }

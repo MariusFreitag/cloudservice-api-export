@@ -83,10 +83,13 @@ const defaultSteps: ExecutionStep[] = [
     },
     tokenCachePath: "$OUTPUT_DIR/google/google-token-cache.json",
     authPort: "3124",
+    calendarInclusionList: null,
     features: {
-      stabilizeData: false,
       calendars: true,
       contacts: true,
+      stabilizeData: false,
+      eventDetails: true,
+      calendarExport: true,
     },
     target: {
       calendarsOverview: "$OUTPUT_DIR/google/calendars.json",

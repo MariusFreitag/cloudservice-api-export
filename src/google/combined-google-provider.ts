@@ -27,6 +27,7 @@ export default class CombinedGoogleProvider {
     private readonly credentials: GoogleAuthCredentials,
     private readonly tokenCachePath: string,
     private readonly authCallbackPort: string,
+    private readonly calendarInclusionList: string[] | null,
     private readonly features: GoogleFeatures,
   ) {}
 
@@ -52,7 +53,7 @@ export default class CombinedGoogleProvider {
         googleAuth,
         this.features,
       );
-      const calendars = await calendarsProvider.getFullCalendarData();
+      const calendars = await calendarsProvider.getFullCalendarData(this.calendarInclusionList);
 
       result.calendars = calendars;
     }

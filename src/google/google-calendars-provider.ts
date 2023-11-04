@@ -88,7 +88,7 @@ export default class GoogleCalendarsProvider {
     return await response.text();
   }
 
-  public async getCalendars(stabilizeData: boolean): Promise<
+  public async getFullCalendarData(stabilizeData: boolean): Promise<
     {
       calendar: calendar_v3.Schema$CalendarListEntry;
       events: { data: calendar_v3.Schema$Event[]; export: string };

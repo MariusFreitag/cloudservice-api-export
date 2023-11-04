@@ -1,8 +1,15 @@
 import { mkdir, writeFile } from "fs/promises";
 import { dirname, join } from "path";
-import CloudflareAuthProvider, { CloudflareAuthCredentials } from "./cloudflare/cloudflare-auth-provider";
-import CloudflareZoneProvider from "./cloudflare/cloudflare-zones-provider";
-import GitHubIssuesProvider, { GitHubCredentials } from "./github/github-issues-provider";
+import CloudflareZonesProvider, {
+  CloudflareAuthCredentials,
+  CloudflareZonesData,
+  CloudflareZonesFeatures,
+} from "./cloudflare/cloudflare-zones-provider";
+import GitHubIssuesProvider, {
+  GitHubCredentials,
+  GitHubIssuesData,
+  GitHubIssuesFeatures,
+} from "./github/github-issues-provider";
 import GoogleAuthProvider, { GoogleAuthCredentials } from "./google/google-auth-provider";
 import GoogleCalendarsProvider from "./google/google-calendars-provider";
 import GoogleContactsProvider from "./google/google-contacts-provider";
@@ -18,10 +25,7 @@ export type ExecutionStep =
       type: "Cloudflare";
       id: string;
       credentials: CloudflareAuthCredentials;
-      features: {
-        stabilizeData: boolean;
-        details: boolean;
-      };
+      features: CloudflareZonesFeatures;
       target: {
         overview?: string;
         details?: string;
@@ -32,9 +36,7 @@ export type ExecutionStep =
       id: string;
       credentials: GitHubCredentials;
       repositories: string[];
-      features: {
-        issueComments: boolean;
-      };
+      features: GitHubIssuesFeatures;
       target: {
         issues?: string;
       };
@@ -73,12 +75,15 @@ export default class Executor {
 
   private async executeCloudflare(
     step: Extract<ExecutionStep, { type: "Cloudflare" }>,
-  ): ReturnType<CloudflareZoneProvider["getZones"]> {
+  ): Promise<CloudflareZonesData> {
     this.log.normal(`Starting to export ${step.id}`);
-    const cloudflareAuth = await new CloudflareAuthProvider(step.credentials).getClient();
 
-    const zoneProvider = new CloudflareZoneProvider(this.log.createLogger(step.id), cloudflareAuth);
-    const zones = await zoneProvider.getZones(step.features.details, step.features.stabilizeData);
+    const zoneProvider = new CloudflareZonesProvider(
+      this.log.createLogger(step.id),
+      step.credentials,
+      step.features,
+    );
+    const zones = await zoneProvider.getZones();
 
     if (step.target.overview) {
       await this.writeFile(join(step.target.overview, "zones.json"), JSON.stringify(zones, null, 2));
@@ -93,14 +98,20 @@ export default class Executor {
     return zones;
   }
 
-  private async executeGitHub(step: Extract<ExecutionStep, { type: "GitHub" }>) {
+  private async executeGitHub(
+    step: Extract<ExecutionStep, { type: "GitHub" }>,
+  ): Promise<Record<string, GitHubIssuesData>> {
     this.log.normal(`Starting to export ${step.id}`);
 
-    const issuesProvider = new GitHubIssuesProvider(this.log.createLogger(step.id), step.credentials);
+    const issuesProvider = new GitHubIssuesProvider(
+      this.log.createLogger(step.id),
+      step.credentials,
+      step.features,
+    );
 
-    const result: Record<string, unknown> = {};
+    const result: Record<string, GitHubIssuesData> = {};
     for (const repository of step.repositories) {
-      const issues = await issuesProvider.getIssues(repository, step.features.issueComments);
+      const issues = await issuesProvider.getIssues(repository);
       result[repository] = issues;
 
       if (step.target.issues) {
@@ -118,7 +129,7 @@ export default class Executor {
       contacts: Awaited<ReturnType<GoogleContactsProvider["getContacts"]>>;
       csv: string;
     };
-    calendars?: Awaited<ReturnType<GoogleCalendarsProvider["getCalendars"]>>;
+    calendars?: Awaited<ReturnType<GoogleCalendarsProvider["getFullCalendarData"]>>;
   }> {
     this.log.normal(`Starting to authorize ${step.id}`);
     await mkdir(dirname(step.tokenCachePath), { recursive: true }).catch(() => {});
@@ -141,7 +152,7 @@ export default class Executor {
         this.log.createLogger(step.id + "-Calendars"),
         googleAuth,
       );
-      const calendars = await calendarsProvider.getCalendars(step.features.stabilizeData);
+      const calendars = await calendarsProvider.getFullCalendarData(step.features.stabilizeData);
 
       result.calendars = calendars;
 
@@ -182,7 +193,13 @@ export default class Executor {
     return result;
   }
 
-  public async execute(): Promise<object[]> {
+  public async execute(): Promise<
+    (
+      | Awaited<ReturnType<Executor["executeCloudflare"]>>
+      | Awaited<ReturnType<Executor["executeGitHub"]>>
+      | Awaited<ReturnType<Executor["executeGoogle"]>>
+    )[]
+  > {
     this.log.normal("Executing");
     const promises = this.config.steps.map((step) => {
       switch (step.type) {

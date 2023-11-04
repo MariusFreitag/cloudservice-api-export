@@ -1,14 +1,23 @@
 import * as Cloudflare from "cloudflare";
 import { Logger } from "../logger";
 
-type ApiResponse = Promise<{ result?: object } | string>;
+export type CloudflareAuthCredentials = {
+  token: string;
+};
 
-type ZoneData = {
+export type CloudflareZonesFeatures = {
+  stabilizeData: boolean;
+  details: boolean;
+};
+
+export type CloudflareZonesData = {
   zone: { name: string } & unknown;
   dnsRecords?: { data: unknown; export: string | undefined };
   settings?: unknown;
   emails?: { routing: unknown; rules: unknown };
 }[];
+
+type ApiResponse = Promise<{ result?: object } | string>;
 
 /**
  * Implements the exporting of all Cloudflare zones,
@@ -16,13 +25,18 @@ type ZoneData = {
  * email routing configs, email routing rules, and general settings.
  */
 export default class CloudflareZoneProvider {
+  private readonly apiClient!: Cloudflare;
+
   constructor(
     private readonly log: Logger,
-    private readonly authClient: Cloudflare,
-  ) {}
+    credentials: CloudflareAuthCredentials,
+    private readonly features: CloudflareZonesFeatures,
+  ) {
+    this.apiClient = new Cloudflare(credentials);
+  }
 
   private request(path: string): ApiResponse {
-    const extendedClient = this.authClient as unknown as {
+    const extendedClient = this.apiClient as unknown as {
       _client: {
         request(
           method: string,
@@ -42,12 +56,9 @@ export default class CloudflareZoneProvider {
     return typeof completedResponse === "string" ? completedResponse : completedResponse.result;
   }
 
-  private async postProcessDnsRecordsExport(
-    stabilizeData: boolean,
-    apiResponse: ApiResponse,
-  ): Promise<string | undefined> {
+  private async postProcessDnsRecordsExport(apiResponse: ApiResponse): Promise<string | undefined> {
     const dnsRecordsExport = (await this.getResult(apiResponse)) as string | undefined;
-    if (stabilizeData) {
+    if (this.features.stabilizeData) {
       // The timestamp documents when this file was exported, which is bad for incremental backups
       this.log.info("Removing timestamps and SOA serial numbers from DNS record exports");
       return dnsRecordsExport
@@ -60,32 +71,32 @@ export default class CloudflareZoneProvider {
     return dnsRecordsExport;
   }
 
-  public async getZones(fetchDetails: boolean, stabilizeData: boolean): Promise<ZoneData> {
-    const zones = (await this.getResult(this.authClient.zones.browse())) as { id: string; name: string }[];
+  public async getZones(): Promise<CloudflareZonesData> {
+    const zones = (await this.getResult(this.apiClient.zones.browse())) as { id: string; name: string }[];
     this.log.info("Fetched all zones");
 
-    if (!fetchDetails) {
+    if (!this.features.details) {
       return zones.map((zone) => ({ zone }));
     }
 
-    const zoneDataPromises: Promise<ZoneData[number]>[] = [];
+    const zoneDataPromises: Promise<CloudflareZonesData[number]>[] = [];
 
     for (const zone of zones ?? []) {
       // Parallelize zone details fetching
       zoneDataPromises.push(
         (async () => {
-          const dnsRecordsResponse = this.authClient.dnsRecords.browse(zone.id);
-          const dnsRecordsExportResponse = this.authClient.dnsRecords.export(zone.id);
+          const dnsRecordsResponse = this.apiClient.dnsRecords.browse(zone.id);
+          const dnsRecordsExportResponse = this.apiClient.dnsRecords.export(zone.id);
           const emailsRoutingResponse = this.request(`/zones/${zone.id}/email/routing`);
           const emailsRoutingRulesResponse = this.request(`/zones/${zone.id}/email/routing/rules`);
-          const settingsResponse = this.authClient.zoneSettings.browse(zone.id);
+          const settingsResponse = this.apiClient.zoneSettings.browse(zone.id);
           this.log.info(`Fetched data for zone '${zone.name}'`);
 
           return {
             zone,
             dnsRecords: {
               data: await this.getResult(dnsRecordsResponse),
-              export: await this.postProcessDnsRecordsExport(stabilizeData, dnsRecordsExportResponse),
+              export: await this.postProcessDnsRecordsExport(dnsRecordsExportResponse),
             },
             settings: await this.getResult(settingsResponse),
             emails: {

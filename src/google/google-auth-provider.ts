@@ -32,7 +32,7 @@ export default class GoogleAuthProvider {
       });
 
       const server = http.createServer((req, res) => {
-        const token = /\?code=(.*)&scope=/.exec(req.url ?? "")?.[1];
+        const token = /[?&]code=([^&]*)&/.exec(req.url ?? "")?.[1];
         res.end(token ? "Success. You can now close this tab." : "Failure. Try again.");
         server.close();
 

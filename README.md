@@ -16,6 +16,7 @@ It serves as a solid starting point for adding more capabilities in the future. 
 - **GitHub**
   - Repository issues
   - Issue comments
+  - Sub-issues
   - **Required:** API URL (can point to the [public GitHub](https://api.github.com) or a GitHub Enterprise instance), Username, and [Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
 - **Google**
   - OAuth flow

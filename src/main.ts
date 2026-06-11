@@ -69,6 +69,7 @@ const defaultSteps: ExecutionStep[] = [
     repositories: ["$GITHUB_REPO"],
     features: {
       issueComments: true,
+      subIssues: true,
     },
     target: {
       issuesDirectory: "$OUTPUT_DIR/github",

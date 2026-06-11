@@ -1,4 +1,5 @@
 export type Logger = {
+  inlineInfo(...message: string[] | number[]): void;
   info(...message: string[] | number[]): void;
   normal(...message: string[] | number[]): void;
   success(...message: string[] | number[]): void;
@@ -9,9 +10,21 @@ export type Logger = {
 
 export type LogLevel = "verbose" | "normal" | "silent";
 
-function print(prefix: string, modifier: string, shouldPrint: boolean, message: string[] | number[]) {
+function print(
+  prefix: string | null,
+  modifier: string,
+  shouldPrint: boolean,
+  newLine: boolean,
+  message: string[] | number[],
+) {
   if (shouldPrint) {
-    console.log(`\x1b[2m${prefix.padEnd(16, " ")} |\x1b[0m ${modifier}${message.join(" ")}\x1b[0m`);
+    if (prefix) {
+      process.stdout.write(`\x1b[2m${prefix.padEnd(16, " ")} | \x1b[0m`);
+    }
+    process.stdout.write(`${modifier}${message.join(" ")}\x1b[0m`);
+    if (newLine) {
+      process.stdout.write("\n");
+    }
   }
 }
 
@@ -27,11 +40,15 @@ function print(prefix: string, modifier: string, shouldPrint: boolean, message: 
  */
 export function createLogger(prefix: string, logLevel: LogLevel): Logger {
   return {
-    info: (...message: string[] | number[]) => print(prefix, "\x1b[2m", logLevel === "verbose", message),
-    normal: (...message: string[] | number[]) => print(prefix, "\x1b[1m", logLevel !== "silent", message),
+    inlineInfo: (...message: string[] | number[]) =>
+      print(null, "\x1b[2m", logLevel === "verbose", false, message),
+    info: (...message: string[] | number[]) =>
+      print(prefix, "\x1b[2m", logLevel === "verbose", true, message),
+    normal: (...message: string[] | number[]) =>
+      print(prefix, "\x1b[1m", logLevel !== "silent", true, message),
     success: (...message: string[] | number[]) =>
-      print(prefix, "\x1b[1m\x1b[32m", logLevel !== "silent", message),
-    attention: (...message: string[] | number[]) => print(prefix, "\x1b[1m\x1b[34m", true, message),
+      print(prefix, "\x1b[1m\x1b[32m", logLevel !== "silent", true, message),
+    attention: (...message: string[] | number[]) => print(prefix, "\x1b[1m\x1b[34m", true, true, message),
     createLogger: (prefix) => createLogger(prefix, logLevel),
     createSubLogger: (prefixSuffix) => createLogger(prefix + prefixSuffix, logLevel),
   };

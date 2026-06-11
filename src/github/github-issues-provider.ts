@@ -8,11 +8,17 @@ export type GitHubCredentials = {
 
 export type GitHubIssuesFeatures = {
   issueComments: boolean;
+  subIssues: boolean;
 };
 
 export type GitHubIssuesData = ({
   comments: number;
+  url: string;
   comments_url: string;
+  sub_issues_summary: {
+    total: number;
+  };
+  sub_issues_data: unknown[];
   comments_data: unknown[];
 } & unknown)[];
 
@@ -56,14 +62,32 @@ export default class GitHubIssuesProvider {
 
     if (this.features.issueComments) {
       // Fetch comments of issues
+      this.log.info("Fetching comments");
+      this.log.inlineInfo(" ↪ ");
       for (const issue of issues) {
         if (issue.comments > 0) {
           const response = await this.request(`${issue.comments_url}?per_page=100`, false);
           issue.comments_data = response;
+          this.log.inlineInfo(`${response.length} `);
         } else {
           issue.comments_data = [];
         }
       }
+      this.log.inlineInfo("\n");
+    }
+
+    if (this.features.subIssues) {
+      // Fetch sub-issues of issues
+      this.log.info("Fetching sub-issues");
+      this.log.inlineInfo(" ↪ ");
+      for (const issue of issues) {
+        if (issue.sub_issues_summary.total > 0) {
+          const subIssuesResponse = await this.request(`${issue.url}/sub_issues`, false);
+          issue.sub_issues_data = subIssuesResponse;
+          this.log.inlineInfo(`${subIssuesResponse.length} `);
+        }
+      }
+      this.log.inlineInfo("\n");
     }
 
     return issues;
